@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
-import { Send } from "lucide-react";
-import React, { useCallback, useRef, useState } from "react";
+import { cn } from '@/lib/utils';
+import { Send } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
 
 const TextInput = ({
   onSend,
@@ -9,14 +9,14 @@ const TextInput = ({
   className,
   maxLength = 200,
 }: {
-  onSend: (value: string, type?: "text" | "voice", time?: string) => void;
+  onSend: (value: string, type?: 'text' | 'voice', time?: string) => void;
   disabled: boolean;
   placeholder: string;
   className?: string;
   maxLength: number;
 }) => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   // 输入框聚焦状态
   const [isFocused, setIsFocused] = useState(false);
   // 文字输入限制
@@ -29,7 +29,7 @@ const TextInput = ({
 
   // 键盘回车发送
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -49,13 +49,13 @@ const TextInput = ({
   const handleSend = useCallback(() => {
     if (text.trim()) {
       onSend(text);
-      setText("");
+      setText('');
     }
   }, [text, onSend]);
   return (
     <div
       className={cn(
-        "rounded-[16px] relative border-[1.5px] border-gray-300",
+        'rounded-[16px] relative border-[1.5px] border-gray-300',
         className
       )}
     >
@@ -72,10 +72,10 @@ const TextInput = ({
           rows={1}
           maxLength={maxLength}
           className={cn(
-            "w-full h-[110px] placeholder:text-gray-400 placeholder:text-[14px] flex-1 text-[14px]",
-            "bg-transparent text-gray-900 border-none focus:outline-none",
-            "resize-none pl-4 pr-2 pt-4 rounded-[16px]",
-            disabled && "opacity-60 cursor-not-allowed"
+            'w-full h-[110px] placeholder:text-gray-400 placeholder:text-[14px] flex-1 text-[14px]',
+            'bg-transparent text-gray-900 border-none focus:outline-none',
+            'resize-none pl-4 pr-2 pt-4 rounded-[16px]',
+            disabled && 'opacity-60 cursor-not-allowed'
           )}
         />
         <div className="absolute bottom-4 right-4 flex items-center">
@@ -84,8 +84,8 @@ const TextInput = ({
             onClick={handleSend}
             disabled={disabled || !text.trim()}
             className={cn(
-              "w-[24px] h-[24px] flex items-center justify-center rounded transition-colors bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white",
-              (disabled || !text.trim()) && "cursor-not-allowed opacity-50"
+              'w-[24px] h-[24px] flex items-center justify-center rounded transition-colors bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white',
+              (disabled || !text.trim()) && 'cursor-not-allowed opacity-50'
             )}
             aria-label="发送消息"
             tabIndex={0}

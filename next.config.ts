@@ -28,7 +28,6 @@ const nextConfig = {
   },
 
   async rewrites() {
-    console.log("\n🔧 [NEXT.JS] 配置代理规则...");
     console.log(`🌍 NEXT_PUBLIC_IP: ${process.env.NEXT_PUBLIC_IP}`);
 
     if (process.env.NODE_ENV === "development") {

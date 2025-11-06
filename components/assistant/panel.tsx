@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useRef, useEffect, useMemo } from "react";
-import { useGenerativeUIStore } from "@/stores/generativeUIStore";
-import type { Message } from "@/stores/generativeUIStore";
-import TextInput from "@/components/text-input";
-import { useMessageSending } from "@/hooks/useMessageSending";
-import { v4 as uuidv4 } from "uuid";
+import { useRef, useEffect } from 'react';
+import { useGenerativeUIStore } from '@/stores/generativeUIStore';
+import TextInput from '@/components/text-input';
+import { useMessageSending } from '@/hooks/useMessageSending';
+import { v4 as uuidv4 } from 'uuid';
+import { usePathname } from 'next/navigation';
 
 interface AssistantPanelProps {
   thread: unknown;
@@ -15,12 +15,10 @@ interface AssistantPanelProps {
 
 const MAX_CHAR_LIMIT = 1000;
 
-const AssistantPanel = ({
-  onClose,
-  isCloseBtn = true,
-  thread,
-}: AssistantPanelProps) => {
+const AssistantPanel = ({ thread }: AssistantPanelProps) => {
   const messageListRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const currentMode = pathname === '/learn' ? 'learn' : 'perform';
 
   // 从 store 获取状态
   const currentSessionId = useGenerativeUIStore(
@@ -35,12 +33,12 @@ const AssistantPanel = ({
   const setCurrentSessionId = useGenerativeUIStore(
     (state) => state.setCurrentSessionId
   );
-  const setLoading = useGenerativeUIStore((state) => state.setLoading);
-  const setError = useGenerativeUIStore((state) => state.setError);
+  // const setLoading = useGenerativeUIStore((state) => state.setLoading);
+  // const setError = useGenerativeUIStore((state) => state.setError);
 
   // 获取当前会话状态
   const generativeUIState = getSessionState(currentSessionId || undefined);
-  
+
   // 解构会话状态
   const {
     messages: chatMessages = [],
@@ -50,8 +48,6 @@ const AssistantPanel = ({
     error = null,
     threadId: sessionThreadId,
   } = generativeUIState || {};
-  
-  console.log('chatMessages: ', chatMessages);
 
   // 初始化会话 - 使用标准 UUID 格式
   useEffect(() => {
@@ -67,7 +63,7 @@ const AssistantPanel = ({
     if (messageListRef.current) {
       messageListRef.current.scrollTo({
         top: messageListRef.current.scrollHeight,
-        behavior: "smooth",
+        behavior: 'smooth',
       });
     }
   }, [chatMessages, isLoading]);
@@ -75,25 +71,14 @@ const AssistantPanel = ({
   // 使用消息发送 Hook
   const { sendMessage } = useMessageSending(thread);
 
-  // 处理关闭
-  const handleClose = () => {
-    onClose?.();
-  };
-
   return (
-    <div className="flex h-full flex-col w-full px-4">
+    <div className="flex h-full flex-col w-full text-black">
       {/* 头部 */}
-      <div className="flex items-center justify-between py-4 border-b">
-        <h2 className="text-lg font-semibold">AI 助手</h2>
-        {isCloseBtn && (
-          <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700"
-            aria-label="关闭面板"
-          >
-            ✕
-          </button>
-        )}
+      <div className="flex flex-col items-center justify-center pb-4 space-y-2 border-b border-dashed border-gray-500">
+        <h3 className="text-md font-semibold">Powered by Termitech</h3>
+        <div className="text-sm text-gray-700">
+          {currentMode === 'learn' ? '学习模式' : '演奏模式'}
+        </div>
       </div>
 
       {/* 消息列表 */}
@@ -102,23 +87,37 @@ const AssistantPanel = ({
         className="flex-1 overflow-y-auto py-4 space-y-4"
       >
         {chatMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
-            <p className="text-base">你好！</p>
-            <p className="mt-2 text-sm">有什么可以帮助你的吗？</p>
-          </div>
+          currentMode === 'learn' ? (
+            <div className="flex flex-col items-center justify-center h-full text-center text-gray-700">
+              <p className="text-base">请演奏一段30s以内的曲目，供机器人学习</p>
+              <div className="flex flex-col items-center mt-6 space-y-4">
+                <button className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer">
+                  开始演奏
+                </button>
+                <button className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 cursor-pointer  ">
+                  结束演奏
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center text-gray-700">
+              <p className="text-base">你好！</p>
+              <p className="mt-2 text-base">请输入或者说出你想听的曲目名称</p>
+            </div>
+          )
         ) : (
           chatMessages.map((message) => (
             <div
               key={message.id}
               className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
+                message.role === 'user' ? 'justify-end' : 'justify-start'
               }`}
             >
               <div
                 className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                  message.role === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-900"
+                  message.role === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-900'
                 }`}
               >
                 <p className="text-sm whitespace-pre-wrap wrap-break-word">
@@ -173,14 +172,14 @@ const AssistantPanel = ({
       </div>
 
       {/* 输入框 */}
-      <div className="border-t py-4">
+      <div className="pt-3">
         <TextInput
           onSend={(text, type, time) => {
             sendMessage({
               id: Math.random().toString(36).slice(2),
               content: text,
               isUser: true,
-              status: "FINISH",
+              status: 'FINISH',
               timestamp: Date.now(),
               type,
               time,

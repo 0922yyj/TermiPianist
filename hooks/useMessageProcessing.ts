@@ -8,7 +8,7 @@ import { useGenerativeUIStore } from "@/stores/generativeUIStore";
  * 负责处理 LangGraph 消息流和增量消息更新
  */
 export const useMessageProcessing = (currentSessionId: string | null) => {
-  console.log("currentSessionId: ", currentSessionId);
+  
   const setError = useGenerativeUIStore((state) => state.setError);
   const addMessage = useGenerativeUIStore((state) => state.addMessage);
   // 使用 useMemo 来稳定 apiUrl，构造完整的 URL
@@ -19,7 +19,7 @@ export const useMessageProcessing = (currentSessionId: string | null) => {
     // 使用当前页面的 origin 构造完整 URL，让 Next.js 代理转发
     const origin = window.location.origin;
     const apiUrl = `${origin}/services/drone-agent-ui`;
-    console.log("API URL: ", apiUrl);
+    
     return apiUrl;
   }, []);
 
@@ -31,14 +31,14 @@ export const useMessageProcessing = (currentSessionId: string | null) => {
     // threadId: 不传，让后端自动创建
     fetchStateHistory: true, // 必须设置为 true，用于 experimental_branchTree
     onError: (error) => {
-      console.error("Stream error:", error);
+      
       const errorMessage = "请求出错，请稍后再试";
       if (currentSessionId) {
         setError(errorMessage, currentSessionId);
       }
     },
     onFinish: (state) => {
-      console.log("Thread finished:", state);
+      
 
       // 处理AI响应消息
       if (currentSessionId && state && "values" in state) {
