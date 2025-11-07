@@ -1,10 +1,12 @@
-import { useEffect } from "react";
-import mitt, { Emitter, Handler } from "mitt";
+import { useEffect } from 'react';
+import mitt, { Emitter, Handler } from 'mitt';
 
 export type Events = {
-  [key: string]: any;
+  [key: string]: unknown;
   // 在下方添加特定的事件类型
-  "send-message-top": { targetType: "text" | "file" };
+  'send-message-top': { targetType: 'text' | 'file' };
+  'start-play': undefined; // 开始演奏事件
+  'change-stream': { url: string }; // 切换流地址事件
 };
 
 // 创建 mitt 的单例实例

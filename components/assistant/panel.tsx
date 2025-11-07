@@ -3,19 +3,19 @@
 import { useRef, useEffect } from 'react';
 import { useGenerativeUIStore } from '@/stores/generativeUIStore';
 import TextInput from '@/components/text-input';
-import { useMessageSending } from '@/hooks/useMessageSending';
 import { v4 as uuidv4 } from 'uuid';
 import { usePathname } from 'next/navigation';
+import { useStream } from '@/hooks/useStream';
+import { emit } from '@/hooks/user-emitter';
 
 interface AssistantPanelProps {
-  thread: unknown;
   onClose?: () => void;
   isCloseBtn?: boolean;
 }
 
 const MAX_CHAR_LIMIT = 1000;
 
-const AssistantPanel = ({ thread }: AssistantPanelProps) => {
+const AssistantPanel = ({}: AssistantPanelProps) => {
   const messageListRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const currentMode = pathname === '/learn' ? 'learn' : 'perform';
@@ -40,15 +40,9 @@ const AssistantPanel = ({ thread }: AssistantPanelProps) => {
   const generativeUIState = getSessionState(currentSessionId || undefined);
 
   // 解构会话状态
-  const {
-    messages: chatMessages = [],
-    ui: threadValuesUI = [],
-    isLoading = false,
-    pendingUserMessage = null,
-    error = null,
-    threadId: sessionThreadId,
-  } = generativeUIState || {};
-
+  const { messages: chatMessages = [], isLoading = false } =
+    generativeUIState || {};
+  console.log('chatMessages', chatMessages);
   // 初始化会话 - 使用标准 UUID 格式
   useEffect(() => {
     if (!currentSessionId) {
@@ -68,9 +62,13 @@ const AssistantPanel = ({ thread }: AssistantPanelProps) => {
     }
   }, [chatMessages, isLoading]);
 
-  // 使用消息发送 Hook
-  const { sendMessage } = useMessageSending(thread);
+  // 使用自定义的useStream hook处理SSE流
+  const { sendMessage } = useStream(currentSessionId);
 
+  const handleSend = (text: string) => {
+    // 直接使用hook中封装的sendMessage方法
+    sendMessage(text);
+  };
   return (
     <div className="flex h-full flex-col w-full text-black">
       {/* 头部 */}
@@ -91,7 +89,13 @@ const AssistantPanel = ({ thread }: AssistantPanelProps) => {
             <div className="flex flex-col items-center justify-center h-full text-center text-gray-700">
               <p className="text-base">请演奏一段30s以内的曲目，供机器人学习</p>
               <div className="flex flex-col items-center mt-6 space-y-4">
-                <button className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer">
+                <button
+                  className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer"
+                  onClick={() => {
+                    // 使用user-emitter触发事件，通知learn/page.tsx开始播放视频
+                    emit('start-play');
+                  }}
+                >
                   开始演奏
                 </button>
                 <button className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 cursor-pointer  ">
@@ -174,17 +178,7 @@ const AssistantPanel = ({ thread }: AssistantPanelProps) => {
       {/* 输入框 */}
       <div className="pt-3">
         <TextInput
-          onSend={(text, type, time) => {
-            sendMessage({
-              id: Math.random().toString(36).slice(2),
-              content: text,
-              isUser: true,
-              status: 'FINISH',
-              timestamp: Date.now(),
-              type,
-              time,
-            });
-          }}
+          onSend={handleSend}
           disabled={isLoading}
           placeholder="请输入消息..."
           maxLength={MAX_CHAR_LIMIT}

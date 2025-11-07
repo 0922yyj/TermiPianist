@@ -4,11 +4,11 @@ const DEFAULT_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH;
 
 const nextConfig = {
   // reactStrictMode: false,
-  output: "standalone",
+  output: 'standalone',
   // 配置应用的基础路径前缀 - 类似于webpack的publicPath
-  basePath: process.env.NODE_ENV === "development" ? "" : DEFAULT_BASE_PATH,
+  basePath: process.env.NODE_ENV === 'development' ? '' : DEFAULT_BASE_PATH,
   // 静态资源CDN前缀配置 - 用于CDN部署
-  assetPrefix: process.env.NODE_ENV === "development" ? "" : DEFAULT_BASE_PATH,
+  assetPrefix: process.env.NODE_ENV === 'development' ? '' : DEFAULT_BASE_PATH,
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -30,18 +30,22 @@ const nextConfig = {
   async rewrites() {
     console.log(`🌍 NEXT_PUBLIC_IP: ${process.env.NEXT_PUBLIC_IP}`);
 
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === 'development') {
       const rewrites = [
         {
-          source: "/services/:path*",
+          source: '/services/:path*',
           destination: `http://${process.env.NEXT_PUBLIC_IP}/services/:path*`,
         },
         {
-          source: "/api/:path*",
+          source: '/api/chat',
+          destination: 'http://192.168.100.67:8000/chat', // 代理SSE聊天接口
+        },
+        {
+          source: '/api/:path*',
           destination: `http://${process.env.NEXT_PUBLIC_IP}/services/aiscan-service/:path*`,
         },
         {
-          source: "/admin/:path*",
+          source: '/admin/:path*',
           destination: `http://${process.env.NEXT_PUBLIC_IP}/services/aiscan-service/admin/:path*`,
         },
       ];
