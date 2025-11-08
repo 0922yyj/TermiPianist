@@ -1,14 +1,15 @@
 'use client';
 
-import AssistantPanel from './assistant/panel';
-import { useGenerativeUIStore } from '@/stores/generativeUIStore';
-import { useMessageProcessing } from '@/hooks/useMessageProcessing';
+import PerformPanel from './assistant/perform-panel';
 import HistoryPanel from './history/panel';
+import LearnPanel from './assistant/learn-panel';
+import { usePathname } from 'next/navigation';
 
 const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
-  const { currentSessionId } = useGenerativeUIStore();
-  const thread = useMessageProcessing(currentSessionId);
   
+  const pathname = usePathname();
+  const isLearn = pathname === '/learn';
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* 历史面板 */}
@@ -24,7 +25,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
       {/* 助手面板 */}
       <aside className="w-[20%] bg-white border-l-1 border-[#bae6fd] overflow-y-auto">
         <div className="py-4 px-3 h-full">
-          <AssistantPanel thread={thread} />
+          {isLearn ? <LearnPanel/> : <PerformPanel/>}
         </div>
       </aside>
     </div>

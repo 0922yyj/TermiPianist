@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Select } from '@/components/ui/select';
 // 获取路由
 import { useRouter } from 'next/navigation';
@@ -30,7 +30,16 @@ export default function HistoryPanel() {
       result: '失败',
     },
   ];
-
+useEffect(() => {
+  fetch('/api/history')
+    .then((res) => res.json())
+    .then((data) => {
+      console.log('history:', data);
+    })
+    .catch((err) => {
+      console.error('Failed to fetch /history:', err);
+    });
+}, []);
   return (
     <div className="flex h-full flex-col justify-between w-full text-black">
       <div>

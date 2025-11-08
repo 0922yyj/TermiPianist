@@ -105,7 +105,7 @@ export default function PerformArea() {
     <div className="flex flex-col gap-4 border-1 border-[#41719C] rounded-md p-4">
       <h2 className="text-xl font-bold">演奏区域</h2>
 
-      <div className="relative w-full overflow-x-auto">
+      <div className="relative w-full overflow-x-auto mt-4 pb-4">
         <div className="piano-container relative h-[240px] min-w-[1400px]">
           {/* 键盘标记 - 显示字母分布 */}
           <div className="absolute top-0 left-0 w-full flex z-10">
