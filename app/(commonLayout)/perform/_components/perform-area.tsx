@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 
 // 定义键盘按键类型
 type WhiteKey = {
@@ -193,10 +194,27 @@ export default function PerformArea() {
         </div>
       </div>
 
-      <div className="text-sm mt-2">
-        <p>钢琴键盘：52个白键，36个黑键</p>
-        <p>白键分布：第一组AB，七组CDEFGAB，最后一组C</p>
-        <p>黑键分布：CDE之间有2个黑键，FGAB之间有3个黑键</p>
+      <div className="flex justify-center items-center gap-64 mt-4">
+        {/* 左手 */}
+        <div className="flex flex-col items-center">
+          <Image
+            src="/left-palm.svg"
+            width={80}
+            height={80}
+            alt="左手"
+            loading="eager"
+          />
+        </div>
+        {/* 右手 */}
+        <div className="flex flex-col items-center">
+          <Image
+            src="/right-palm.svg"
+            width={80}
+            height={80}
+            alt="右手"
+            loading="eager"
+          />
+        </div>
       </div>
     </div>
   );

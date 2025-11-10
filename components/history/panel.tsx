@@ -3,6 +3,20 @@ import { Select } from '@/components/ui/select';
 // 获取路由
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
+import { Loader } from 'lucide-react';
+
+// 定义演奏历史记录类型
+interface PerformHistoryItem {
+  id: string;
+  pieceId: string;
+  pieceName: string;
+  composer: string;
+  startedAt: string;
+  endedAt: string | null;
+  durationSec: number | null;
+  status: 'ended' | string;
+  success: boolean;
+}
 
 export default function HistoryPanel() {
   const router = useRouter();
@@ -14,55 +28,58 @@ export default function HistoryPanel() {
   // 实际使用的模式：如果用户手动选择了模式，则使用用户选择的；否则使用基于路径的模式
   const mode = userSelectedMode || currentMode;
 
-  const performLogs = [
-    {
-      id: 1,
-      time: '2025-01-01',
-      name: '小星星',
-      status: '已完成',
-      result: '成功',
-    },
-    {
-      id: 2,
-      time: '2025-01-02',
-      name: '小星星2',
-      status: '进行中',
-      result: '失败',
-    },
-  ];
-useEffect(() => {
-  fetch('/api/history')
-    .then((res) => res.json())
-    .then((data) => {
-      console.log('history:', data);
-    })
-    .catch((err) => {
-      console.error('Failed to fetch /history:', err);
-    });
-}, []);
+  const [performHistory, setPerformHistory] = useState<PerformHistoryItem[]>(
+    []
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  console.log('mode:', mode);
+  useEffect(() => {
+    fetch(`/api/history`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('history:', data);
+        setPerformHistory(data);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch /history:', err);
+        setIsLoading(false);
+      });
+  }, []);
   return (
     <div className="flex h-full flex-col justify-between w-full text-black">
       <div>
         <div className="flex justify-between items-center mb-4">
           <h1>当前已演奏曲目:</h1>
         </div>
-        <ul className="mt-3 space-y-2 text-sm">
-          {performLogs.map((item, index) => (
-            <li key={index} className="flex gap-2">
-              <div>{index + 1}.</div>
-              <div>
+        {isLoading ? (
+          <div className="mt-8 text-center">
+            <Loader className="inline-block h-6 w-6 animate-spin text-gray-500" />
+            <p className="mt-2 text-gray-500">加载中...</p>
+          </div>
+        ) : performHistory.length > 0 ? (
+          <ul className="mt-3 space-y-2 text-sm">
+            {performHistory.map((item, index) => (
+              <li key={item.id} className="flex gap-2">
+                <div>{index + 1}.</div>
                 <div>
-                  <span className="mr-3">{item.name}</span>
-                  <span>{item.time}</span>
+                  <div>
+                    <span className="mr-3">{item.pieceName}</span>
+                    <span>{new Date(item.startedAt).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span className="mr-3">{item.status}</span>
+                    <span>{item.success ? '成功' : '失败'}</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="mr-3">{item.status}</span>
-                  <span>{item.result}</span>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="mt-8 text-center text-gray-500">
+            <p>暂无演奏记录</p>
+          </div>
+        )}
       </div>
       <div>
         <Select

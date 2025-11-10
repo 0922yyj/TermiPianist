@@ -21,8 +21,8 @@ export const useStream = (currentSessionId: string | null) => {
     setIsProcessing(true);
 
     // 发送请求并处理SSE流
-    fetch('/api/chat', {
-    // fetch('http://192.168.3.63:8000/chat', {
+    // fetch(`/api/chat`, {
+    fetch(`http://${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
       method: 'POST',
       headers: {
         Accept: 'text/event-stream',

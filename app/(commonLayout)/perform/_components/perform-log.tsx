@@ -1,22 +1,17 @@
 'use client';
 
 import { useAssistantStore } from '@/stores/assistant';
-import { useRef, useEffect } from 'react';
+import { useSmartScroll } from '@/hooks/useSmartScroll';
 
 export default function PerformLog() {
   // 直接从 assistant store 获取演奏日志消息
   const playingLogs = useAssistantStore((state) => state.performLogMessages);
 
-  // 创建日志容器的引用
-  const logsContainerRef = useRef<HTMLDivElement>(null);
-
-  // 监听日志变化，自动滚动到底部
-  useEffect(() => {
-    if (logsContainerRef.current) {
-      logsContainerRef.current.scrollTop =
-        logsContainerRef.current.scrollHeight;
-    }
-  }, [playingLogs]);
+  // 使用智能滚动 hook，传入日志数组作为依赖
+  const { containerRef, handleScroll } = useSmartScroll([playingLogs], {
+    autoScrollResumeTime: 3000, // 3秒后恢复自动滚动
+    scrollThreshold: 50, // 50像素的滚动阈值
+  });
 
   return (
     <div className="h-[40vh] flex flex-col gap-4 border-1 border-[#41719C] rounded-md p-4">
@@ -26,8 +21,9 @@ export default function PerformLog() {
         <p className="text-gray-400">暂无演奏日志</p>
       ) : (
         <div
-          ref={logsContainerRef}
+          ref={containerRef}
           className="space-y-1 overflow-y-auto flex-1"
+          onScroll={handleScroll}
         >
           {playingLogs.map((log) => (
             <div key={log.id} className="space-y-1">
