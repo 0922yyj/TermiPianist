@@ -21,23 +21,19 @@ interface PerformHistoryItem {
 export default function HistoryPanel() {
   const router = useRouter();
   const pathname = usePathname();
-
-  const [userSelectedMode, setUserSelectedMode] = useState('');
-  // 根据当前路径计算当前模式（派生状态）
-  const currentMode = pathname === '/learn' ? 'learn' : 'perform';
-  // 实际使用的模式：如果用户手动选择了模式，则使用用户选择的；否则使用基于路径的模式
-  const mode = userSelectedMode || currentMode;
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentMode, setCurrentMode] = useState('');
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentMode(pathname === '/learn' ? 'learn' : 'perform');
+  }, [pathname]);
   const [performHistory, setPerformHistory] = useState<PerformHistoryItem[]>(
     []
   );
-  const [isLoading, setIsLoading] = useState(true);
-  console.log('mode:', mode);
   useEffect(() => {
-    fetch(`/api/history`)
+    fetch(`http://${process.env.NEXT_PUBLIC_BASE_URL}/history`)
       .then((res) => res.json())
       .then((data) => {
-        console.log('history:', data);
         setPerformHistory(data);
         setIsLoading(false);
       })
@@ -48,7 +44,7 @@ export default function HistoryPanel() {
   }, []);
   return (
     <div className="flex h-full flex-col justify-between w-full text-black">
-      <div>
+      <div className="h-[calc(100vh-36px)]">
         <div className="flex justify-between items-center mb-4">
           <h1>当前已演奏曲目:</h1>
         </div>
@@ -58,7 +54,7 @@ export default function HistoryPanel() {
             <p className="mt-2 text-gray-500">加载中...</p>
           </div>
         ) : performHistory.length > 0 ? (
-          <ul className="mt-3 space-y-2 text-sm">
+          <ul className="mt-3 space-y-2 text-sm h-[calc(100vh-130px)] overflow-y-auto pr-2">
             {performHistory.map((item, index) => (
               <li key={item.id} className="flex gap-2">
                 <div>{index + 1}.</div>
@@ -83,9 +79,9 @@ export default function HistoryPanel() {
       </div>
       <div>
         <Select
-          value={mode}
+          value={currentMode}
           onChange={(e) => {
-            setUserSelectedMode(e.target.value);
+            setCurrentMode(e.target.value);
             // 根据选择的模式跳转到对应页面
             if (e.target.value === 'perform') {
               router.push('/perform');

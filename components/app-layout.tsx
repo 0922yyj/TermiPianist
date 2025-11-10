@@ -13,7 +13,7 @@ const AppLayoutContent = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* 历史面板 */}
-      <aside className="w-[16%] bg-white border-r-1 border-[#bae6fd] overflow-y-auto">
+      <aside className="w-[16%] bg-white border-r-1 border-[#bae6fd]">
         <div className="p-4 h-full">
           <HistoryPanel />
         </div>

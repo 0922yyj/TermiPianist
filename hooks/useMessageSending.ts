@@ -14,16 +14,6 @@ export const useMessageSending = (thread: any) => {
   );
 
   const sendMessage = async (message: any) => {
-    /* const isDisabled = getGenerativeUIButtonDisabledState({
-      responding,
-      isFlightActive,
-      isGenerativeUILoading,
-    });
-
-    if (isDisabled) {
-      console.log('AI正在响应中，请稍候...');
-      return;
-    } */
 
     // 生成会话ID
     const sessionId = generativeUICurrentSessionId || uuidv4();

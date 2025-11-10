@@ -121,3 +121,55 @@ body {
 .animate-sound-wave-3 {
   animation: sound-wave-3 0.8s infinite 0.4s;
 }
+
+/* 三点加载动画 */
+.dots-loading {
+  display: inline-flex;
+}
+
+.dots-loading .dot {
+  animation: dotFade 1.4s infinite;
+  opacity: 0;
+}
+
+.dots-loading .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dots-loading .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dotFade {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
+/* 打字机式三点加载动画 */
+.typing-dots {
+  display: inline-flex;
+}
+
+.typing-dots .dot {
+  width: 6px;
+  height: 6px;
+  margin: 0 3px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: typingDot 1.5s infinite;
+}
+
+.typing-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingDot {
+  0% { opacity: 0; transform: translateY(0); }
+  25% { opacity: 1; transform: translateY(-2px); }
+  50% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}

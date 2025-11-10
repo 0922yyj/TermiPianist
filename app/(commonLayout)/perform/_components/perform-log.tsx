@@ -25,8 +25,8 @@ export default function PerformLog() {
           className="space-y-1 overflow-y-auto flex-1"
           onScroll={handleScroll}
         >
-          {playingLogs.map((log) => (
-            <div key={log.id} className="space-y-1">
+          {playingLogs.map((log, index) => (
+            <div key={`${log.id}-${index}`} className="space-y-1">
               <p className="text-sm whitespace-pre-wrap">{log.content}</p>
               {/* <p className="text-xs text-gray-500 mt-1">
                 {new Date(log.timestamp).toLocaleString()}

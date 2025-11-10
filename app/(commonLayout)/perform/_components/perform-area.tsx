@@ -1,106 +1,35 @@
 'use client';
 import { useState } from 'react';
 import Image from 'next/image';
-
-// 定义键盘按键类型
-type WhiteKey = {
-  note: string;
-  id: string;
-  label: string;
-};
-
-type BlackKey = {
-  note: string;
-  id: string;
-  afterWhiteKey: string;
-};
+import { generatePianoKeys, getBlackKeyPosition } from './piano';
 
 export default function PerformArea() {
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
-  // 生成钢琴键盘布局
-  // 按照要求：52个白键（第一组AB，七组CDEFGAB，最后一组C）和36个黑键
-
-  // 构建白键数组
-  const whiteKeys: WhiteKey[] = [
-    // 第一组：AB
-    { note: 'A', id: 'A0', label: 'A' },
-    { note: 'B', id: 'B0', label: 'B' },
-  ];
-
-  // 七组 CDEFGAB
-  for (let octave = 1; octave <= 7; octave++) {
-    whiteKeys.push({ note: 'C', id: `C${octave}`, label: 'C' });
-    whiteKeys.push({ note: 'D', id: `D${octave}`, label: 'D' });
-    whiteKeys.push({ note: 'E', id: `E${octave}`, label: 'E' });
-    whiteKeys.push({ note: 'F', id: `F${octave}`, label: 'F' });
-    whiteKeys.push({ note: 'G', id: `G${octave}`, label: 'G' });
-    whiteKeys.push({ note: 'A', id: `A${octave}`, label: 'A' });
-    whiteKeys.push({ note: 'B', id: `B${octave}`, label: 'B' });
-  }
-
-  // 最后一组：C
-  whiteKeys.push({ note: 'C', id: 'C8', label: 'C' });
-
-  // 构建黑键数组
-  const blackKeys: BlackKey[] = [];
-
-  // 第一组AB之间的黑键
-  blackKeys.push({
-    note: 'A#',
-    id: 'A#0',
-    afterWhiteKey: 'A0',
-  });
-
-  // 按照规律：CDE之间有2个黑键，FGAB之间有3个黑键
-  for (let octave = 1; octave <= 7; octave++) {
-    // CDE之间的两个黑键
-    blackKeys.push({
-      note: 'C#',
-      id: `C#${octave}`,
-      afterWhiteKey: `C${octave}`,
-    });
-    blackKeys.push({
-      note: 'D#',
-      id: `D#${octave}`,
-      afterWhiteKey: `D${octave}`,
-    });
-
-    // FGAB之间的三个黑键
-    blackKeys.push({
-      note: 'F#',
-      id: `F#${octave}`,
-      afterWhiteKey: `F${octave}`,
-    });
-    blackKeys.push({
-      note: 'G#',
-      id: `G#${octave}`,
-      afterWhiteKey: `G${octave}`,
-    });
-    blackKeys.push({
-      note: 'A#',
-      id: `A#${octave}`,
-      afterWhiteKey: `A${octave}`,
-    });
-  }
-
-  // 计算黑键位置的辅助函数
-  const getBlackKeyPosition = (blackKey: BlackKey) => {
-    const whiteKeyIndex = whiteKeys.findIndex(
-      (k) => k.id === blackKey.afterWhiteKey
-    );
-    if (whiteKeyIndex === -1) return 0;
-    return whiteKeyIndex;
-  };
+  // 从piano.tsx导入钢琴键盘数据
+  const { whiteKeys, blackKeys } = generatePianoKeys();
 
   const handleKeyClick = (id: string) => {
     setActiveKey(id);
+
+    // 查找对应的键并打印MIDI编号
+    const whiteKey = whiteKeys.find((key) => key.id === id);
+    if (whiteKey) {
+      console.log(`按下白键: ${whiteKey.id}, MIDI编号: ${whiteKey.midiNumber}`);
+    } else {
+      const blackKey = blackKeys.find((key) => key.id === id);
+      if (blackKey) {
+        console.log(
+          `按下黑键: ${blackKey.id}, MIDI编号: ${blackKey.midiNumber}`
+        );
+      }
+    }
+
     // 这里可以添加播放音符的逻辑
     setTimeout(() => setActiveKey(null), 300);
   };
 
   // 验证键盘数量
-  console.log(`白键数量: ${whiteKeys.length}, 黑键数量: ${blackKeys.length}`);
 
   return (
     <div className="flex flex-col gap-4 border-1 border-[#41719C] rounded-md p-4">
@@ -108,7 +37,7 @@ export default function PerformArea() {
 
       <div className="relative w-full overflow-x-auto mt-4 pb-4">
         <div className="piano-container relative h-[240px] min-w-[1400px]">
-          {/* 键盘标记 - 显示字母分布 */}
+          {/* 键盘标记 - 显示分割线 */}
           <div className="absolute top-0 left-0 w-full flex z-10">
             {whiteKeys.map((key, index) => {
               // 获取当前键的ID信息
@@ -130,19 +59,17 @@ export default function PerformArea() {
               return (
                 <div
                   key={`label-${key.id}`}
-                  className={`flex-1 h-6 flex items-center justify-center text-xs font-bold relative ${
+                  className={`flex-1 h-6 flex items-center justify-center relative ${
                     needDivider ? 'border-l-2 border-gray-300' : ''
                   }`}
-                >
-                  {key.label}
-                </div>
+                ></div>
               );
             })}
             {/* 添加最后一个分割线 */}
             <div className="absolute top-0 right-0 h-6 border-l-2 border-gray-300"></div>
           </div>
 
-          {/* 红色边框 - 位于字母下方 */}
+          {/* 红色边框 - 位于分割线下方 */}
           <div className="absolute top-6 left-0 w-full h-1 bg-red-500 z-10"></div>
 
           {/* 白键 */}
@@ -156,7 +83,11 @@ export default function PerformArea() {
                     : 'bg-gradient-to-b from-white to-gray-50 hover:bg-gray-50'
                 } ${index === 0 ? 'border-l-2' : ''}`}
                 onClick={() => handleKeyClick(key.id)}
-              ></div>
+              >
+                <span className="absolute bottom-1 text-[10px] text-gray-400">
+                  {key.midiNumber}
+                </span>
+              </div>
             ))}
           </div>
 
@@ -164,7 +95,7 @@ export default function PerformArea() {
           <div className="black-keys absolute top-6 left-0 w-full h-[60%]">
             {blackKeys.map((blackKey) => {
               const whiteKeyWidth = 100 / whiteKeys.length;
-              const whiteKeyIndex = getBlackKeyPosition(blackKey);
+              const whiteKeyIndex = getBlackKeyPosition(blackKey, whiteKeys);
 
               // 计算黑键位置：在对应白键的右侧
               const leftPosition =
@@ -184,7 +115,11 @@ export default function PerformArea() {
                     zIndex: 5,
                   }}
                   onClick={() => handleKeyClick(blackKey.id)}
-                />
+                >
+                  <span className="absolute bottom-1 text-[10px] text-white flex justify-center w-full">
+                    {blackKey.midiNumber}
+                  </span>
+                </div>
               );
             })}
           </div>

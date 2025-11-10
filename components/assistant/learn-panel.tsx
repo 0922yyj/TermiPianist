@@ -1,7 +1,10 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { emit } from '@/hooks/user-emitter';
+import { useAssistantStore } from '@/stores/assistant';
+import { debounce } from 'lodash';
 
 interface AssistantPanelProps {
   onClose?: () => void;
@@ -10,6 +13,87 @@ interface AssistantPanelProps {
 
 const LearnPanel = ({}: AssistantPanelProps) => {
   const messageListRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const [disabled, setDisabled] = useState(false);
+
+  const startLearning = async () => {
+    try {
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_BASE_URL}/learning/start`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('学习开始请求失败');
+      }
+
+      const data = await response.json();
+      emit('change-stream', { url: data.rtmp_url });
+      emit('start-play');
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const endLearning = async () => {
+    try {
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_BASE_URL}/learning/end`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('学习结束请求失败');
+      }
+
+      const data = await response.json();
+      if (data && data.file_paths) {
+        // 使用状态管理库存储数据
+        useAssistantStore.getState().setLearningData({
+          filePaths: data.file_paths,
+          mode: 'learning',
+        });
+
+        router.push('/perform');
+      }
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // 创建防抖函数
+  const debouncedStartLearning = debounce(() => {
+    setDisabled(true);
+    startLearning();
+  }, 2000);
+
+  const debouncedEndLearning = debounce(() => {
+    setDisabled(true);
+    endLearning();
+  }, 2000);
+
+  // 组件卸载时清除防抖函数
+  useEffect(() => {
+    return () => {
+      debouncedStartLearning.cancel();
+      debouncedEndLearning.cancel();
+    };
+  }, [debouncedStartLearning, debouncedEndLearning]);
 
   return (
     <div className="flex h-full flex-col w-full text-black">
@@ -27,15 +111,17 @@ const LearnPanel = ({}: AssistantPanelProps) => {
           <p className="text-base">请演奏一段30s以内的曲目，供机器人学习</p>
           <div className="flex flex-col items-center mt-6 space-y-4">
             <button
-              className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer"
-              onClick={() => {
-                // 使用user-emitter触发事件，通知learn/page.tsx开始播放视频
-                emit('start-play');
-              }}
+              className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer disabled:cursor-not-allowed"
+              onClick={debouncedStartLearning}
+              disabled={disabled}
             >
               开始演奏
             </button>
-            <button className="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 cursor-pointer  ">
+            <button
+              className="px-4 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              onClick={debouncedEndLearning}
+              disabled={!disabled} // 只有在开始演奏按钮被禁用时（即已开始演奏）才能点击
+            >
               结束演奏
             </button>
           </div>

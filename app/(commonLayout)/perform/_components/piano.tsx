@@ -1,0 +1,340 @@
+'use client';
+
+// 定义键盘按键类型
+export type WhiteKey = {
+  note: string;
+  id: string;
+  label: string;
+  midiNumber: number;
+};
+
+export type BlackKey = {
+  note: string;
+  id: string;
+  afterWhiteKey: string;
+  midiNumber: number;
+};
+
+// 生成钢琴键盘数据
+export function generatePianoKeys() {
+  // 构建白键数组 - 从A0到C8，带MIDI编号
+  const whiteKeys: WhiteKey[] = [];
+
+  // 第一个八度：A0(21), B0(23)
+  whiteKeys.push({ note: 'A', id: 'A0', label: 'A', midiNumber: 21 });
+  whiteKeys.push({ note: 'B', id: 'B0', label: 'B', midiNumber: 23 });
+
+  // 七个完整八度：C1-B7
+  // C1(24), D1(26), E1(28), F1(29), G1(31), A1(33), B1(35)
+  whiteKeys.push({ note: 'C', id: 'C1', label: 'C', midiNumber: 24 });
+  whiteKeys.push({ note: 'D', id: 'D1', label: 'D', midiNumber: 26 });
+  whiteKeys.push({ note: 'E', id: 'E1', label: 'E', midiNumber: 28 });
+  whiteKeys.push({ note: 'F', id: 'F1', label: 'F', midiNumber: 29 });
+  whiteKeys.push({ note: 'G', id: 'G1', label: 'G', midiNumber: 31 });
+  whiteKeys.push({ note: 'A', id: 'A1', label: 'A', midiNumber: 33 });
+  whiteKeys.push({ note: 'B', id: 'B1', label: 'B', midiNumber: 35 });
+
+  // C2(36), D2(38), E2(40), F2(41), G2(43), A2(45), B2(47)
+  whiteKeys.push({ note: 'C', id: 'C2', label: 'C', midiNumber: 36 });
+  whiteKeys.push({ note: 'D', id: 'D2', label: 'D', midiNumber: 38 });
+  whiteKeys.push({ note: 'E', id: 'E2', label: 'E', midiNumber: 40 });
+  whiteKeys.push({ note: 'F', id: 'F2', label: 'F', midiNumber: 41 });
+  whiteKeys.push({ note: 'G', id: 'G2', label: 'G', midiNumber: 43 });
+  whiteKeys.push({ note: 'A', id: 'A2', label: 'A', midiNumber: 45 });
+  whiteKeys.push({ note: 'B', id: 'B2', label: 'B', midiNumber: 47 });
+
+  // C3(48), D3(50), E3(52), F3(53), G3(55), A3(57), B3(59)
+  whiteKeys.push({ note: 'C', id: 'C3', label: 'C', midiNumber: 48 });
+  whiteKeys.push({ note: 'D', id: 'D3', label: 'D', midiNumber: 50 });
+  whiteKeys.push({ note: 'E', id: 'E3', label: 'E', midiNumber: 52 });
+  whiteKeys.push({ note: 'F', id: 'F3', label: 'F', midiNumber: 53 });
+  whiteKeys.push({ note: 'G', id: 'G3', label: 'G', midiNumber: 55 });
+  whiteKeys.push({ note: 'A', id: 'A3', label: 'A', midiNumber: 57 });
+  whiteKeys.push({ note: 'B', id: 'B3', label: 'B', midiNumber: 59 });
+
+  // C4(60), D4(62), E4(64), F4(65), G4(67), A4(69), B4(71)
+  whiteKeys.push({ note: 'C', id: 'C4', label: 'C', midiNumber: 60 });
+  whiteKeys.push({ note: 'D', id: 'D4', label: 'D', midiNumber: 62 });
+  whiteKeys.push({ note: 'E', id: 'E4', label: 'E', midiNumber: 64 });
+  whiteKeys.push({ note: 'F', id: 'F4', label: 'F', midiNumber: 65 });
+  whiteKeys.push({ note: 'G', id: 'G4', label: 'G', midiNumber: 67 });
+  whiteKeys.push({ note: 'A', id: 'A4', label: 'A', midiNumber: 69 });
+  whiteKeys.push({ note: 'B', id: 'B4', label: 'B', midiNumber: 71 });
+
+  // C5(72), D5(74), E5(76), F5(77), G5(79), A5(81), B5(83)
+  whiteKeys.push({ note: 'C', id: 'C5', label: 'C', midiNumber: 72 });
+  whiteKeys.push({ note: 'D', id: 'D5', label: 'D', midiNumber: 74 });
+  whiteKeys.push({ note: 'E', id: 'E5', label: 'E', midiNumber: 76 });
+  whiteKeys.push({ note: 'F', id: 'F5', label: 'F', midiNumber: 77 });
+  whiteKeys.push({ note: 'G', id: 'G5', label: 'G', midiNumber: 79 });
+  whiteKeys.push({ note: 'A', id: 'A5', label: 'A', midiNumber: 81 });
+  whiteKeys.push({ note: 'B', id: 'B5', label: 'B', midiNumber: 83 });
+
+  // C6(84), D6(86), E6(88), F6(89), G6(91), A6(93), B6(95)
+  whiteKeys.push({ note: 'C', id: 'C6', label: 'C', midiNumber: 84 });
+  whiteKeys.push({ note: 'D', id: 'D6', label: 'D', midiNumber: 86 });
+  whiteKeys.push({ note: 'E', id: 'E6', label: 'E', midiNumber: 88 });
+  whiteKeys.push({ note: 'F', id: 'F6', label: 'F', midiNumber: 89 });
+  whiteKeys.push({ note: 'G', id: 'G6', label: 'G', midiNumber: 91 });
+  whiteKeys.push({ note: 'A', id: 'A6', label: 'A', midiNumber: 93 });
+  whiteKeys.push({ note: 'B', id: 'B6', label: 'B', midiNumber: 95 });
+
+  // C7(96), D7(98), E7(100), F7(101), G7(103), A7(105), B7(107)
+  whiteKeys.push({ note: 'C', id: 'C7', label: 'C', midiNumber: 96 });
+  whiteKeys.push({ note: 'D', id: 'D7', label: 'D', midiNumber: 98 });
+  whiteKeys.push({ note: 'E', id: 'E7', label: 'E', midiNumber: 100 });
+  whiteKeys.push({ note: 'F', id: 'F7', label: 'F', midiNumber: 101 });
+  whiteKeys.push({ note: 'G', id: 'G7', label: 'G', midiNumber: 103 });
+  whiteKeys.push({ note: 'A', id: 'A7', label: 'A', midiNumber: 105 });
+  whiteKeys.push({ note: 'B', id: 'B7', label: 'B', midiNumber: 107 });
+
+  // 最后一个音符：C8(108)
+  whiteKeys.push({ note: 'C', id: 'C8', label: 'C', midiNumber: 108 });
+
+  // 构建黑键数组 - 带MIDI编号
+  const blackKeys: BlackKey[] = [];
+
+  // 第一组AB之间的黑键
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#0',
+    afterWhiteKey: 'A0',
+    midiNumber: 22,
+  });
+
+  // 按照规律：CDE之间有2个黑键，FGAB之间有3个黑键
+  // 第一个八度
+  blackKeys.push({
+    note: 'C#',
+    id: 'C#1',
+    afterWhiteKey: 'C1',
+    midiNumber: 25,
+  });
+  blackKeys.push({
+    note: 'D#',
+    id: 'D#1',
+    afterWhiteKey: 'D1',
+    midiNumber: 27,
+  });
+  blackKeys.push({
+    note: 'F#',
+    id: 'F#1',
+    afterWhiteKey: 'F1',
+    midiNumber: 30,
+  });
+  blackKeys.push({
+    note: 'G#',
+    id: 'G#1',
+    afterWhiteKey: 'G1',
+    midiNumber: 32,
+  });
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#1',
+    afterWhiteKey: 'A1',
+    midiNumber: 34,
+  });
+
+  // 第二个八度
+  blackKeys.push({
+    note: 'C#',
+    id: 'C#2',
+    afterWhiteKey: 'C2',
+    midiNumber: 37,
+  });
+  blackKeys.push({
+    note: 'D#',
+    id: 'D#2',
+    afterWhiteKey: 'D2',
+    midiNumber: 39,
+  });
+  blackKeys.push({
+    note: 'F#',
+    id: 'F#2',
+    afterWhiteKey: 'F2',
+    midiNumber: 42,
+  });
+  blackKeys.push({
+    note: 'G#',
+    id: 'G#2',
+    afterWhiteKey: 'G2',
+    midiNumber: 44,
+  });
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#2',
+    afterWhiteKey: 'A2',
+    midiNumber: 46,
+  });
+
+  // 第三个八度
+  blackKeys.push({
+    note: 'C#',
+    id: 'C#3',
+    afterWhiteKey: 'C3',
+    midiNumber: 49,
+  });
+  blackKeys.push({
+    note: 'D#',
+    id: 'D#3',
+    afterWhiteKey: 'D3',
+    midiNumber: 51,
+  });
+  blackKeys.push({
+    note: 'F#',
+    id: 'F#3',
+    afterWhiteKey: 'F3',
+    midiNumber: 54,
+  });
+  blackKeys.push({
+    note: 'G#',
+    id: 'G#3',
+    afterWhiteKey: 'G3',
+    midiNumber: 56,
+  });
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#3',
+    afterWhiteKey: 'A3',
+    midiNumber: 58,
+  });
+
+  // 第四个八度
+  blackKeys.push({
+    note: 'C#',
+    id: 'C#4',
+    afterWhiteKey: 'C4',
+    midiNumber: 61,
+  });
+  blackKeys.push({
+    note: 'D#',
+    id: 'D#4',
+    afterWhiteKey: 'D4',
+    midiNumber: 63,
+  });
+  blackKeys.push({
+    note: 'F#',
+    id: 'F#4',
+    afterWhiteKey: 'F4',
+    midiNumber: 66,
+  });
+  blackKeys.push({
+    note: 'G#',
+    id: 'G#4',
+    afterWhiteKey: 'G4',
+    midiNumber: 68,
+  });
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#4',
+    afterWhiteKey: 'A4',
+    midiNumber: 70,
+  });
+
+  // 第五个八度
+  blackKeys.push({
+    note: 'C#',
+    id: 'C#5',
+    afterWhiteKey: 'C5',
+    midiNumber: 73,
+  });
+  blackKeys.push({
+    note: 'D#',
+    id: 'D#5',
+    afterWhiteKey: 'D5',
+    midiNumber: 75,
+  });
+  blackKeys.push({
+    note: 'F#',
+    id: 'F#5',
+    afterWhiteKey: 'F5',
+    midiNumber: 78,
+  });
+  blackKeys.push({
+    note: 'G#',
+    id: 'G#5',
+    afterWhiteKey: 'G5',
+    midiNumber: 80,
+  });
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#5',
+    afterWhiteKey: 'A5',
+    midiNumber: 82,
+  });
+
+  // 第六个八度
+  blackKeys.push({
+    note: 'C#',
+    id: 'C#6',
+    afterWhiteKey: 'C6',
+    midiNumber: 85,
+  });
+  blackKeys.push({
+    note: 'D#',
+    id: 'D#6',
+    afterWhiteKey: 'D6',
+    midiNumber: 87,
+  });
+  blackKeys.push({
+    note: 'F#',
+    id: 'F#6',
+    afterWhiteKey: 'F6',
+    midiNumber: 90,
+  });
+  blackKeys.push({
+    note: 'G#',
+    id: 'G#6',
+    afterWhiteKey: 'G6',
+    midiNumber: 92,
+  });
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#6',
+    afterWhiteKey: 'A6',
+    midiNumber: 94,
+  });
+
+  // 第七个八度
+  blackKeys.push({
+    note: 'C#',
+    id: 'C#7',
+    afterWhiteKey: 'C7',
+    midiNumber: 97,
+  });
+  blackKeys.push({
+    note: 'D#',
+    id: 'D#7',
+    afterWhiteKey: 'D7',
+    midiNumber: 99,
+  });
+  blackKeys.push({
+    note: 'F#',
+    id: 'F#7',
+    afterWhiteKey: 'F7',
+    midiNumber: 102,
+  });
+  blackKeys.push({
+    note: 'G#',
+    id: 'G#7',
+    afterWhiteKey: 'G7',
+    midiNumber: 104,
+  });
+  blackKeys.push({
+    note: 'A#',
+    id: 'A#7',
+    afterWhiteKey: 'A7',
+    midiNumber: 106,
+  });
+
+  return { whiteKeys, blackKeys };
+}
+
+// 计算黑键位置的辅助函数
+export function getBlackKeyPosition(blackKey: BlackKey, whiteKeys: WhiteKey[]) {
+  const whiteKeyIndex = whiteKeys.findIndex(
+    (k) => k.id === blackKey.afterWhiteKey
+  );
+  if (whiteKeyIndex === -1) return 0;
+  return whiteKeyIndex;
+}

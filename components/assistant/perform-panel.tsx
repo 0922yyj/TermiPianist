@@ -23,7 +23,6 @@ const PerformPanel = ({}: AssistantPanelProps) => {
 
   // 从 assistant store 获取消息
   const chatMessages = useAssistantStore((state) => state.messages);
-  console.log('chatMessages', chatMessages);
 
   // 处理消息列表，合并连续的planning类型消息
   const processedMessages = useMemo(() => {
@@ -95,18 +94,35 @@ const PerformPanel = ({}: AssistantPanelProps) => {
   }, [chatMessages, isLoading]);
 
   // 使用自定义hook处理SSE流
-  const { sendStreamRequest, isProcessing } = useStream(currentSessionId);
+  const {
+    sendStreamRequest,
+    isStreamEnded,
+    setIsStreamEnded,
+    hasReceivedData,
+  } = useStream(currentSessionId);
+
+  // 监听流结束事件，更新loading状态
+  useEffect(() => {
+    let isMounted = true;
+    if (isStreamEnded && isMounted) {
+      // 使用setTimeout避免在effect中直接调用setState
+      setTimeout(() => {
+        if (isMounted) {
+          setIsLoading(false);
+          setIsStreamEnded(false); // 重置流结束状态
+        }
+      }, 0);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isStreamEnded, setIsStreamEnded]);
 
   // 处理消息发送
   const handleSend = () => {
     if (isLoading) return;
     setIsLoading(true);
     sendStreamRequest();
-
-    // 当流处理完成时，设置loading状态为false
-    if (!isProcessing) {
-      setIsLoading(false);
-    }
   };
 
   // 处理麦克风按钮点击
@@ -115,6 +131,10 @@ const PerformPanel = ({}: AssistantPanelProps) => {
 
     // 如果从非激活状态变为激活状态，则发送请求
     if (!isMicActive) {
+      // 清空上次的演奏日志
+      const clearPlayingLogs = useAssistantStore.getState().clearPlayingLogs;
+      clearPlayingLogs();
+
       // 直接调用handleSend，不传递参数
       handleSend();
     }
@@ -200,32 +220,17 @@ const PerformPanel = ({}: AssistantPanelProps) => {
           })
         )}
 
-        {/* 加载状态 */}
-        {isLoading && (
+        {/* 加载状态 - 仅在收到数据后显示 */}
+        {isLoading && hasReceivedData && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <svg
-                  className="animate-spin h-4 w-4"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="8"
-                    cy="8"
-                    r="7"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M15 8a7 7 0 11-7-7v2a5 5 0 100 10v2a7 7 0 007-7z"
-                  />
-                </svg>
-                思考中...
-              </div>
+            <div className="flex items-center text-sm text-gray-600">
+              <span className="flex items-center">
+                <span className="typing-dots ml-1">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </span>
+              </span>
             </div>
           </div>
         )}
