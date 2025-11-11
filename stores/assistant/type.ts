@@ -13,8 +13,14 @@ export interface Message {
   id: string;
   sessionId: string;
   timestamp: string;
-  content: KeyPositionContent;
+  content: string | KeyPositionContent;
   status: number;
+}
+
+// 会话消息组类型
+export interface SessionMessages {
+  sessionId: string;
+  messages: Message[];
 }
 
 // 学习数据类型
@@ -25,7 +31,7 @@ export interface LearningData {
 
 // Store 状态类型
 export interface AssistantState {
-  messages: Message[];
+  messages: SessionMessages[];
   performLogMessages: Message[];
   keyPositionMessages: Message[];
   learningData?: LearningData;

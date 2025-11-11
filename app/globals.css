@@ -173,3 +173,33 @@ body {
   50% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(0); }
 }
+
+/* 自定义Ant Design Steps组件样式 */
+.ant-steps-item-content {
+  min-height: auto !important;
+  padding-bottom: 8px !important;
+}
+
+.custom-small-steps .ant-steps-item {
+  padding-bottom: 8px !important;
+}
+
+.custom-small-steps .ant-steps-item-content {
+  min-height: auto !important;
+}
+
+/* 设置ant-steps-icon的尺寸为24x24并移除边框 */
+.ant-steps-icon {
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+}
+
+/* 移除所有状态和子元素的边框 */
+.ant-steps-item-icon,
+.ant-steps-item-icon * {
+  border: none !important;
+}

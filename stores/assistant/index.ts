@@ -13,9 +13,33 @@ export const useAssistantStore = create<AssistantState>((set) => ({
   learningData: { filePaths: [], mode: '' },
   // 添加普通消息
   addMessages: (msg: Message) =>
-    set((state) => ({
-      messages: [...state.messages, msg],
-    })),
+    set((state) => {
+      // 查找是否已存在该 sessionId 的会话
+      const sessionIndex = state.messages.findIndex(
+        (session) => session.sessionId === msg.sessionId
+      );
+
+      if (sessionIndex !== -1) {
+        // 如果会话已存在，添加消息到该会话中
+        const updatedMessages = [...state.messages];
+        updatedMessages[sessionIndex] = {
+          ...updatedMessages[sessionIndex],
+          messages: [...updatedMessages[sessionIndex].messages, msg],
+        };
+        return { messages: updatedMessages };
+      } else {
+        // 如果会话不存在，创建新的会话
+        return {
+          messages: [
+            ...state.messages,
+            {
+              sessionId: msg.sessionId,
+              messages: [msg],
+            },
+          ],
+        };
+      }
+    }),
   // 添加演奏日志消息
   addPerformLogMessage: (msg: Message) =>
     set((state) => ({

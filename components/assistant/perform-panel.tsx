@@ -5,40 +5,118 @@ import { useAssistantStore } from '@/stores/assistant';
 import { v4 as uuidv4 } from 'uuid';
 import { Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import React from 'react';
 import MessageComponent from './message';
 import useStream from '@/hooks/use-stream';
 import type { Message } from '@/stores/assistant/type';
+import { Steps } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 
 interface AssistantPanelProps {
   onClose?: () => void;
   isCloseBtn?: boolean;
 }
 
+// 定义planning消息组类型
+interface PlanningGroupMessage {
+  type: string;
+  id: string;
+  content: string;
+  planningMessages: Message[];
+}
+
+// 辅助函数：根据消息内容判断步骤状态
+const getStepStatus = (
+  message: PlanningGroupMessage,
+  stepTitle: string,
+  sessionMessages: Message[]
+): 'wait' | 'process' | 'finish' | 'error' => {
+  // 检查是否有planning消息
+  if (!message.planningMessages || message.planningMessages.length === 0) {
+    return 'wait';
+  }
+
+  // 获取最新的planning消息
+  const latestPlanningMsg =
+    message.planningMessages[message.planningMessages.length - 1];
+
+  // 检查各个步骤的状态
+  const allPlanningContents = message.planningMessages.map(
+    (msg: Message) => msg.content
+  );
+
+  // 获取当前 planning-group 所属会话的 sessionId
+  const currentSessionId = message.planningMessages[0].sessionId;
+
+  // 在当前会话的消息中查找最后一条消息
+  const sessionLastMessage = sessionMessages
+    .filter((msg) => msg.sessionId === currentSessionId)
+    .slice(-1)[0];
+
+  // 如果是"开始演奏"步骤，并且当前会话的最后一条消息是结束消息，则标记为完成
+  if (
+    stepTitle === '开始演奏' &&
+    sessionLastMessage &&
+    sessionLastMessage.type === 'end'
+  ) {
+    return 'finish';
+  }
+
+  // 如果最新消息包含当前步骤标题，则为进行中
+  if (
+    typeof latestPlanningMsg.content === 'string' &&
+    latestPlanningMsg.content.includes(stepTitle)
+  ) {
+    return 'process';
+  }
+
+  // 如果任何消息包含当前步骤标题，则为已完成
+  if (
+    allPlanningContents.some(
+      (content) => typeof content === 'string' && content.includes(stepTitle)
+    )
+  ) {
+    return 'finish';
+  }
+
+  // 默认为等待状态
+  return 'wait';
+};
+
 const PerformPanel = ({}: AssistantPanelProps) => {
   const messageListRef = useRef<HTMLDivElement>(null);
-  const [isMicActive, setIsMicActive] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // 用于跟踪每个planning组的折叠状态
+  const [collapsedStates, setCollapsedStates] = useState<
+    Record<string, boolean>
+  >({});
 
   // 从 assistant store 获取消息
-  const chatMessages = useAssistantStore((state) => state.messages);
+  const allMessages = useAssistantStore((state) => state.messages);
+
+  // 获取所有会话的消息列表（合并所有会话）
+  const chatMessages = useMemo(() => {
+    // 将所有会话的消息合并到一个数组中
+    const allChatMessages: Message[] = [];
+    allMessages.forEach((session) => {
+      allChatMessages.push(...session.messages);
+    });
+    return allChatMessages;
+  }, [allMessages]);
 
   // 处理消息列表，合并连续的planning类型消息
   const processedMessages = useMemo(() => {
-    const result: (
-      | Message
-      | {
-          type: string;
-          id: string;
-          content: string;
-          planningMessages: Message[];
-        }
-    )[] = [];
+    const result: (Message | PlanningGroupMessage)[] = [];
     let planningGroup: Message[] = [];
 
     chatMessages.forEach((message) => {
-      // 跳过type为playing_log的消息
-      if (message.type === 'playing_log') {
+      // 跳过type为playing_log和end的消息
+      if (
+        message.type === 'playing_log' ||
+        message.type === 'end' ||
+        message.type === 'voice_end'
+      ) {
         return; // 不处理这种类型的消息
       }
 
@@ -51,7 +129,11 @@ const PerformPanel = ({}: AssistantPanelProps) => {
           result.push({
             type: 'planning-group',
             id: `planning-group-${planningGroup[0].id}`,
-            content: planningGroup.map((msg) => msg.content).join('\n'),
+            content: planningGroup
+              .map((msg) =>
+                typeof msg.content === 'string' ? msg.content : ''
+              )
+              .join('\n'),
             planningMessages: planningGroup,
           });
           planningGroup = [];
@@ -66,7 +148,9 @@ const PerformPanel = ({}: AssistantPanelProps) => {
       result.push({
         type: 'planning-group',
         id: `planning-group-${planningGroup[0].id}`,
-        content: planningGroup.map((msg) => msg.content).join('\n'),
+        content: planningGroup
+          .map((msg) => (typeof msg.content === 'string' ? msg.content : ''))
+          .join('\n'),
         planningMessages: planningGroup,
       });
     }
@@ -90,7 +174,7 @@ const PerformPanel = ({}: AssistantPanelProps) => {
         behavior: 'smooth',
       });
     }
-  }, [chatMessages, isLoading]);
+  }, [chatMessages, isLoading, currentSessionId, allMessages]);
 
   // 使用自定义hook处理SSE流
   const {
@@ -98,6 +182,8 @@ const PerformPanel = ({}: AssistantPanelProps) => {
     isStreamEnded,
     setIsStreamEnded,
     hasReceivedData,
+    isVoiceEnded,
+    setIsVoiceEnded,
   } = useStream(currentSessionId);
 
   // 监听流结束事件，更新loading状态
@@ -124,19 +210,46 @@ const PerformPanel = ({}: AssistantPanelProps) => {
     sendStreamRequest();
   };
 
+  // 判断麦克风按钮是否应该禁用
+  const isMicDisabled = useMemo(() => {
+    // 获取 allMessages 的最后一条会话数据
+    if (allMessages.length === 0) return false;
+
+    const lastSession = allMessages[allMessages.length - 1];
+    const lastSessionMessages = lastSession.messages;
+
+    // 检查是否有 voice_end 和 end 类型的消息
+    const hasVoiceEnd = lastSessionMessages.some(
+      (msg) => msg.type === 'voice_end'
+    );
+    const hasEnd = lastSessionMessages.some((msg) => msg.type === 'end');
+
+    // 当有 voice_end 但没有 end 时，禁用按钮
+    if (hasVoiceEnd && !hasEnd) {
+      return true;
+    }
+
+    return false;
+  }, [allMessages]);
+
   // 处理麦克风按钮点击
   const handleMicClick = () => {
-    setIsMicActive(!isMicActive);
+    // 如果按钮被禁用，不执行任何操作
+    if (isMicDisabled) return;
 
     // 如果从非激活状态变为激活状态，则发送请求
-    if (!isMicActive) {
-      // 清空上次的演奏日志
-      const clearPlayingLogs = useAssistantStore.getState().clearPlayingLogs;
-      clearPlayingLogs();
+    // 生成新的 sessionId
+    const newSessionId = uuidv4();
+    setCurrentSessionId(newSessionId);
 
-      // 直接调用handleSend，不传递参数
-      handleSend();
-    }
+    // 清空上次的演奏日志
+    const clearPlayingLogs = useAssistantStore.getState().clearPlayingLogs;
+    clearPlayingLogs();
+    // 重置语音结束标识
+    setIsVoiceEnded(false);
+
+    // 直接调用handleSend，不传递参数
+    handleSend();
   };
   return (
     <div className="flex h-full flex-col w-full text-black">
@@ -145,17 +258,9 @@ const PerformPanel = ({}: AssistantPanelProps) => {
         <h3 className="text-md font-semibold">Powered by Termitech</h3>
         <div className="text-sm text-gray-700">演奏模式</div>
         {/* 语音输入按钮 */}
-        <button
-          onClick={handleMicClick}
-          className={cn(
-            'w-8 h-8 flex items-center justify-center rounded-full transition-colors mt-2 cursor-pointer',
-            isMicActive
-              ? 'bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white'
-              : 'bg-[#7BB6EA] hover:bg-[#7BB6EA]/90 text-white'
-          )}
-          aria-label="语音输入"
-        >
-          {isMicActive ? (
+        {/* 语音波浪动画按钮 */}
+        {!isVoiceEnded ? (
+          <button className="w-8 h-8 flex items-center justify-center rounded-full transition-colors mt-2 cursor-pointer bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white">
             <div className="relative">
               {/* 语音波浪动画 */}
               <div className="flex items-center justify-center gap-0.5">
@@ -166,10 +271,22 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                 <div className="w-0.5 h-3 bg-white animate-sound-wave-1"></div>
               </div>
             </div>
-          ) : (
+          </button>
+        ) : (
+          <button
+            onClick={handleMicClick}
+            disabled={isMicDisabled}
+            className={cn(
+              'w-8 h-8 flex items-center justify-center rounded-full transition-colors mt-2',
+              isMicDisabled
+                ? 'cursor-not-allowed bg-gray-400 text-gray-200'
+                : 'cursor-pointer bg-[#3C89E8] hover:bg-[#3C89E8]/90 text-white'
+            )}
+            aria-label="语音输入"
+          >
             <Mic size={18} />
-          )}
-        </button>
+          </button>
+        )}
       </div>
 
       {/* 消息列表 */}
@@ -186,10 +303,21 @@ const PerformPanel = ({}: AssistantPanelProps) => {
           processedMessages.map((message) => {
             if (message.type === 'planning-group') {
               // 渲染合并后的planning消息组
+              // 确保消息是 PlanningGroupMessage 类型
+              const planningGroupMsg = message as PlanningGroupMessage;
               return (
-                <div key={message.id} className="flex justify-start">
+                <div key={planningGroupMsg.id} className="flex justify-start">
                   <div className="max-w-[80%] rounded-lg px-4 py-2 bg-yellow-50 text-gray-900 border border-yellow-200">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => {
+                        // 使用React状态来管理折叠状态
+                        setCollapsedStates((prev) => ({
+                          ...prev,
+                          [planningGroupMsg.id]: !prev[planningGroupMsg.id],
+                        }));
+                      }}
+                    >
                       <svg
                         className="w-4 h-4 text-yellow-500"
                         fill="currentColor"
@@ -205,54 +333,178 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                       <span className="text-sm font-medium text-yellow-700">
                         大模型思考过程 ：
                       </span>
+                      {collapsedStates[planningGroupMsg.id] ? (
+                        <svg
+                          className="w-4 h-4 text-yellow-700 ml-auto"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 5l7 7-7 7"
+                          ></path>
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4 text-yellow-700 ml-auto"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      )}
                     </div>
-                    <p className="text-sm whitespace-pre-wrap wrap-break-word">
-                      {message.content}
-                    </p>
+                    <div
+                      className="text-sm whitespace-pre-wrap wrap-break-word mt-3"
+                      style={{
+                        display: collapsedStates[planningGroupMsg.id]
+                          ? 'none'
+                          : 'block',
+                      }}
+                    >
+                      <Steps
+                        direction="vertical"
+                        size="small"
+                        className="custom-small-steps"
+                        items={[
+                          {
+                            title: '下载歌曲',
+                            description: '',
+                            status: getStepStatus(
+                              planningGroupMsg,
+                              '下载歌曲',
+                              chatMessages
+                            ),
+                            icon:
+                              getStepStatus(
+                                planningGroupMsg,
+                                '下载歌曲',
+                                chatMessages
+                              ) === 'process' ? (
+                                <LoadingOutlined style={{ fontSize: '16px' }} />
+                              ) : null,
+                          },
+                          {
+                            title: '分析歌曲',
+                            description: '',
+                            status: getStepStatus(
+                              planningGroupMsg,
+                              '分析歌曲',
+                              chatMessages
+                            ),
+                            icon:
+                              getStepStatus(
+                                planningGroupMsg,
+                                '分析歌曲',
+                                chatMessages
+                              ) === 'process' ? (
+                                <LoadingOutlined style={{ fontSize: '16px' }} />
+                              ) : null,
+                          },
+                          {
+                            title: '解析参数',
+                            description: '',
+                            status: getStepStatus(
+                              planningGroupMsg,
+                              '解析参数',
+                              chatMessages
+                            ),
+                            icon:
+                              getStepStatus(
+                                planningGroupMsg,
+                                '解析参数',
+                                chatMessages
+                              ) === 'process' ? (
+                                <LoadingOutlined style={{ fontSize: '16px' }} />
+                              ) : null,
+                          },
+                          {
+                            title: '大模型基于硬件参数生成指法',
+                            description: '',
+                            status: getStepStatus(
+                              planningGroupMsg,
+                              '大模型基于硬件参数生成指法',
+                              chatMessages
+                            ),
+                            icon:
+                              getStepStatus(
+                                planningGroupMsg,
+                                '大模型基于硬件参数生成指法',
+                                chatMessages
+                              ) === 'process' ? (
+                                <LoadingOutlined style={{ fontSize: '16px' }} />
+                              ) : null,
+                          },
+                          {
+                            title: '开始演奏',
+                            description: '',
+                            status: getStepStatus(
+                              planningGroupMsg,
+                              '开始演奏',
+                              chatMessages
+                            ),
+                            icon:
+                              getStepStatus(
+                                planningGroupMsg,
+                                '开始演奏',
+                                chatMessages
+                              ) === 'process' ? (
+                                <LoadingOutlined style={{ fontSize: '16px' }} />
+                              ) : null,
+                          },
+                        ]}
+                      />
+                    </div>
                   </div>
                 </div>
               );
             } else {
-              // 渲染普通消息
-              return <MessageComponent key={message.id} message={message} />;
+              // 确保 content 是字符串类型，并渲染普通消息
+              const messageWithStringContent = {
+                ...message,
+                content:
+                  typeof message.content === 'string'
+                    ? message.content
+                    : JSON.stringify(message.content),
+              };
+              return (
+                <MessageComponent
+                  key={message.id}
+                  message={messageWithStringContent}
+                />
+              );
             }
           })
         )}
 
         {/* 加载状态 - 仅在收到数据后显示 */}
-        {isLoading && hasReceivedData && (
-          <div className="flex justify-start">
-            <div className="flex items-center text-sm text-gray-600">
-              <span className="flex items-center">
-                <span className="typing-dots ml-1">
-                  <span className="dot"></span>
-                  <span className="dot"></span>
-                  <span className="dot"></span>
+        {isLoading &&
+          hasReceivedData &&
+          chatMessages[chatMessages.length - 1]?.type !== 'planning' && (
+            <div className="flex justify-start">
+              <div className="flex items-center text-sm text-gray-600">
+                <span className="flex items-center">
+                  <span className="typing-dots ml-1">
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                    <span className="dot"></span>
+                  </span>
                 </span>
-              </span>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* 错误提示 */}
-        {/* {error && (
-          <div className="flex justify-center">
-            <div className="bg-red-50 text-red-600 rounded-lg px-4 py-2 text-sm">
-              {error}
-            </div>
-          </div>
-        )} */}
+          )}
       </div>
-
-      {/* 输入框 */}
-      {/* <div className="pt-3">
-        <TextInput
-          onSend={handleSend}
-          disabled={isLoading}
-          placeholder="请输入消息..."
-          maxLength={MAX_CHAR_LIMIT}
-        />
-      </div> */}
     </div>
   );
 };

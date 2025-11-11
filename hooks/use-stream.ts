@@ -13,6 +13,7 @@ export const useStream = (currentSessionId: string | null) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStreamEnded, setIsStreamEnded] = useState(false);
   const [hasReceivedData, setHasReceivedData] = useState(false);
+  const [isVoiceEnded, setIsVoiceEnded] = useState(true);
 
   /**
    * 发送消息并处理SSE流响应
@@ -91,11 +92,15 @@ export const useStream = (currentSessionId: string | null) => {
                         setHasReceivedData(true);
 
                         // 将接收到的数据添加到消息列表
-                        if (jsonData.content && currentSessionId) {
+                        // 对于某些特殊类型（如 voice_end），即使没有 content 也需要处理
+                        if (
+                          (jsonData.content || jsonData.type === 'voice_end') &&
+                          currentSessionId
+                        ) {
                           const aiMessage: Message = {
                             type: jsonData.type,
                             id: jsonData.id,
-                            sessionId: jsonData.sessionId,
+                            sessionId: currentSessionId, // 使用前端的 currentSessionId
                             content: jsonData.content,
                             timestamp: jsonData.timestamp,
                             status: jsonData.status,
@@ -106,6 +111,12 @@ export const useStream = (currentSessionId: string | null) => {
                             // 如果是结束消息，设置流结束状态
                             setIsStreamEnded(true);
                             setIsProcessing(false);
+                            useAssistantStore.getState().addMessages(aiMessage);
+                          } else if (jsonData.type === 'voice_end') {
+                            // 如果是语音结束消息，保存到store
+                            useAssistantStore.getState().addMessages(aiMessage);
+                            // 设置语音结束标识为true
+                            setIsVoiceEnded(true);
                           } else if (jsonData.type === 'playing_log') {
                             // 如果是演奏日志消息，使用addPerformLogMessage方法
                             useAssistantStore
@@ -190,6 +201,8 @@ export const useStream = (currentSessionId: string | null) => {
     isStreamEnded,
     setIsStreamEnded,
     hasReceivedData,
+    isVoiceEnded,
+    setIsVoiceEnded,
   };
 };
 

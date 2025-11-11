@@ -45,9 +45,7 @@ export default function PerformArea() {
     (state) => state.keyPositionMessages
   );
 
-  useEffect(() => {
-    console.log('keyPositionMessages', keyPositionMessages);
-  }, [keyPositionMessages]);
+  useEffect(() => {}, [keyPositionMessages]);
 
   // 使用ref跟踪已处理的消息ID集合，避免重复处理
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
@@ -64,14 +62,11 @@ export default function PerformArea() {
         return; // 已处理过，跳过
       }
 
-      console.log('处理消息', message);
-
       // 添加到已处理集合
       processedMessageIdsRef.current.add(message.id);
 
       // 处理消息内容
       const content = message.content as KeyPositionContent;
-      console.log('content', content);
 
       // 确保content是对象类型
       if (typeof content !== 'object' || !content) return;
@@ -79,7 +74,7 @@ export default function PerformArea() {
       // 根据midi_id查找对应的键
       const midiId = content.midi_id;
       const action = content.action;
-      console.log('action', action);
+
       const hand = content.hand; // 'left' 或 'right'
 
       // 查找对应的键
@@ -90,7 +85,6 @@ export default function PerformArea() {
       if (keyId) {
         // 使用reducer处理状态更新
         if (action === 'note_on') {
-          console.log('按下按键', midiId, keyId, hand);
           dispatchActiveKeys({
             type: 'NOTE_ON',
             midiId,
@@ -98,7 +92,6 @@ export default function PerformArea() {
             hand,
           });
         } else if (action === 'note_off') {
-          console.log('释放按键', midiId);
           dispatchActiveKeys({
             type: 'NOTE_OFF',
             midiId,
@@ -172,14 +165,14 @@ export default function PerformArea() {
 
   return (
     <div className="flex flex-col border-1 border-[#41719C] rounded-md p-4">
-      {keyPositionMessages.map((message) => {
+      {/*{keyPositionMessages.map((message) => {
         // 检查content是否为对象，如果是则转换为JSON字符串显示
         const content =
           typeof message.content === 'object'
             ? JSON.stringify(message.content)
             : message.content;
         return <div key={message.id}>{content}</div>;
-      })}
+      })}*/}
       <h2 className="text-xl font-bold">演奏区域</h2>
 
       <div className="relative w-full overflow-x-auto mt-4 pb-4 h-[400px]">
