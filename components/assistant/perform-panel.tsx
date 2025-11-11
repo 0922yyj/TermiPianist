@@ -5,7 +5,6 @@ import { useAssistantStore } from '@/stores/assistant';
 import { v4 as uuidv4 } from 'uuid';
 import { Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React from 'react';
 import MessageComponent from './message';
 import useStream from '@/hooks/use-stream';
 import type { Message } from '@/stores/assistant/type';

@@ -83,7 +83,6 @@ export const useStream = (currentSessionId: string | null) => {
                         const cleanedData = dataLine.trim();
                         // 跳过心跳消息（以冒号开头的行）
                         if (cleanedData.startsWith(':')) {
-                          
                           return; // 跳过此次循环
                         }
 
@@ -112,27 +111,40 @@ export const useStream = (currentSessionId: string | null) => {
                             useAssistantStore
                               .getState()
                               .addPerformLogMessage(aiMessage);
+                          } else if (jsonData.type === 'key_position') {
+                            // 处理键位数据消息，将content从字符串转换为对象
+                            try {
+                              // 如果content是字符串，尝试解析为JSON对象
+                              if (typeof aiMessage.content === 'string') {
+                                aiMessage.content = JSON.parse(
+                                  aiMessage.content
+                                );
+                              }
+                            } catch (error) {
+                              console.error('解析key_position内容失败:', error);
+                            }
+
+                            // 使用addKeyPositionMessage方法
+                            useAssistantStore
+                              .getState()
+                              .addKeyPositionMessage(aiMessage);
                           } else {
                             // 其他类型的消息，使用addMessages方法
                             useAssistantStore.getState().addMessages(aiMessage);
                           }
                         }
-                      } catch (error) {
-                        console.error('解析SSE数据出错:', error);
-                      }
+                      } catch (error) {}
                     });
                   } else {
                     // 如果不是SSE格式，尝试直接解析整个chunk
                     try {
                       // 检查是否是心跳消息
                       if (chunk.trim().startsWith(':')) {
-                        
                         // 继续处理流
                         return processStream();
                       }
 
                       const jsonData = JSON.parse(chunk);
-                      
 
                       // 设置已收到数据标志
                       setHasReceivedData(true);
@@ -148,19 +160,14 @@ export const useStream = (currentSessionId: string | null) => {
                         };
                         useAssistantStore.getState().addMessages(aiMessage);
                       }
-                    } catch (error) {
-                      
-                    }
+                    } catch (error) {}
                   }
-                } catch (error) {
-                  
-                }
+                } catch (error) {}
 
                 // 继续处理流
                 return processStream();
               })
               .catch((error) => {
-                
                 // 设置加载状态为false
                 setIsProcessing(false);
               });
@@ -170,7 +177,6 @@ export const useStream = (currentSessionId: string | null) => {
           return processStream();
         })
         .catch((error) => {
-          
           // 设置加载状态为false
           setIsProcessing(false);
         });

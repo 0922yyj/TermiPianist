@@ -9,11 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.0",
     "@langchain/core": "^1.0.2",
     "@langchain/langgraph-sdk": "^1.0.0",
     "@radix-ui/react-select": "^2.2.6",
     "@types/lodash": "^4.17.20",
     "@types/uuid": "^11.0.0",
+    "antd": "^5.28.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "flv.js": "^1.6.2",
