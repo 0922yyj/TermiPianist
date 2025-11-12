@@ -32,8 +32,7 @@ export const useStream = (currentSessionId: string | null) => {
         : {};
 
       // 发送请求并处理SSE流
-      // fetch(`/api/chat`, {
-      fetch(`http://${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
+      fetch(`/api/chat`, {
         method: 'POST',
         headers: {
           Accept: 'text/event-stream',
@@ -136,9 +135,7 @@ export const useStream = (currentSessionId: string | null) => {
                                   aiMessage.content
                                 );
                               }
-                            } catch (error) {
-                              
-                            }
+                            } catch (error) {}
 
                             // 使用addKeyPositionMessage方法
                             useAssistantStore
