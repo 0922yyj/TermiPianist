@@ -20,12 +20,15 @@ const LearnPanel = ({}: AssistantPanelProps) => {
 
   const startLearning = async () => {
     try {
-      const response = await fetch(`/api/learning/start`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_BASE_URL}/learning/start`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error('学习开始请求失败');
@@ -43,12 +46,15 @@ const LearnPanel = ({}: AssistantPanelProps) => {
 
   const endLearning = async () => {
     try {
-      const response = await fetch(`/api/learning/end`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `http://${process.env.NEXT_PUBLIC_BASE_URL}/learning/end`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error('学习结束请求失败');

@@ -31,7 +31,7 @@ export default function HistoryPanel() {
     []
   );
   useEffect(() => {
-    fetch(`/api/history`)
+    fetch(`http://${process.env.NEXT_PUBLIC_BASE_URL}/history`)
       .then((res) => res.json())
       .then((data) => {
         setPerformHistory(data);

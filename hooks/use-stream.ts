@@ -32,7 +32,8 @@ export const useStream = (currentSessionId: string | null) => {
         : {};
 
       // 发送请求并处理SSE流
-      fetch(`/api/chat`, {
+      // fetch(`/api/chat`, {
+      fetch(`http://${process.env.NEXT_PUBLIC_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
           Accept: 'text/event-stream',
