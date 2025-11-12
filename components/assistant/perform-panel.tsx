@@ -25,6 +25,14 @@ interface PlanningGroupMessage {
   planningMessages: Message[];
 }
 
+// 定义playing_summary消息组类型
+interface PlayingSummaryGroupMessage {
+  type: string;
+  id: string;
+  content: string;
+  summaryMessages: Message[];
+}
+
 // 辅助函数：根据消息内容判断步骤状态
 const getStepStatus = (
   message: PlanningGroupMessage,
@@ -91,6 +99,10 @@ const PerformPanel = ({}: AssistantPanelProps) => {
   const [collapsedStates, setCollapsedStates] = useState<
     Record<string, boolean>
   >({});
+  // 用于跟踪每个planning组的第二行描述是否显示
+  const [secondLineVisible, setSecondLineVisible] = useState<
+    Record<string, boolean>
+  >({});
 
   // 从 assistant store 获取消息
   const allMessages = useAssistantStore((state) => state.messages);
@@ -105,10 +117,15 @@ const PerformPanel = ({}: AssistantPanelProps) => {
     return allChatMessages;
   }, [allMessages]);
 
-  // 处理消息列表，合并连续的planning类型消息
+  // 处理消息列表，合并连续的planning类型消息和playing_summary类型消息
   const processedMessages = useMemo(() => {
-    const result: (Message | PlanningGroupMessage)[] = [];
+    const result: (
+      | Message
+      | PlanningGroupMessage
+      | PlayingSummaryGroupMessage
+    )[] = [];
     let planningGroup: Message[] = [];
+    let summaryGroup: Message[] = [];
 
     chatMessages.forEach((message) => {
       // 跳过type为playing_log和end的消息
@@ -123,6 +140,9 @@ const PerformPanel = ({}: AssistantPanelProps) => {
       if (message.type === 'planning') {
         // 收集planning类型消息
         planningGroup.push(message);
+      } else if (message.type === 'playing_summary') {
+        // 收集playing_summary类型消息
+        summaryGroup.push(message);
       } else {
         // 如果有收集到的planning消息，先添加到结果中
         if (planningGroup.length > 0) {
@@ -138,7 +158,21 @@ const PerformPanel = ({}: AssistantPanelProps) => {
           });
           planningGroup = [];
         }
-        // 添加非planning类型的消息
+        // 如果有收集到的summary消息，先添加到结果中
+        if (summaryGroup.length > 0) {
+          result.push({
+            type: 'playing_summary-group',
+            id: `playing_summary-group-${summaryGroup[0].id}`,
+            content: summaryGroup
+              .map((msg) =>
+                typeof msg.content === 'string' ? msg.content : ''
+              )
+              .join('\n'),
+            summaryMessages: summaryGroup,
+          });
+          summaryGroup = [];
+        }
+        // 添加非planning和playing_summary类型的消息
         result.push(message);
       }
     });
@@ -155,8 +189,56 @@ const PerformPanel = ({}: AssistantPanelProps) => {
       });
     }
 
+    // 处理最后可能剩余的summary消息
+    if (summaryGroup.length > 0) {
+      result.push({
+        type: 'playing_summary-group',
+        id: `playing_summary-group-${summaryGroup[0].id}`,
+        content: summaryGroup
+          .map((msg) => (typeof msg.content === 'string' ? msg.content : ''))
+          .join('\n'),
+        summaryMessages: summaryGroup,
+      });
+    }
+
     return result;
   }, [chatMessages]);
+
+  // 监听解析硬件参数步骤状态，延迟显示第二行描述
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+
+    processedMessages.forEach((message) => {
+      if (message.type === 'planning-group') {
+        const planningGroupMsg = message as PlanningGroupMessage;
+        const stepStatus = getStepStatus(
+          planningGroupMsg,
+          '解析硬件参数',
+          chatMessages
+        );
+
+        if (
+          (stepStatus === 'process' || stepStatus === 'finish') &&
+          !secondLineVisible[planningGroupMsg.id]
+        ) {
+          // 延迟0.5秒后显示第二行
+          const timer = setTimeout(() => {
+            setSecondLineVisible((prev) => ({
+              ...prev,
+              [planningGroupMsg.id]: true,
+            }));
+          }, 500);
+
+          timers.push(timer);
+        }
+      }
+    });
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [processedMessages, chatMessages, secondLineVisible]);
+
   // 初始化会话 - 使用标准 UUID 格式
   useEffect(() => {
     if (!currentSessionId) {
@@ -185,7 +267,9 @@ const PerformPanel = ({}: AssistantPanelProps) => {
     isVoiceEnded,
     setIsVoiceEnded,
   } = useStream(currentSessionId);
-
+  useEffect(() => {
+    console.log('hasReceivedData: ', hasReceivedData, isLoading);
+  }, [hasReceivedData, isLoading]);
   // 监听流结束事件，更新loading状态
   useEffect(() => {
     let isMounted = true;
@@ -301,7 +385,19 @@ const PerformPanel = ({}: AssistantPanelProps) => {
           </div>
         ) : (
           processedMessages.map((message) => {
-            if (message.type === 'planning-group') {
+            if (message.type === 'playing_summary-group') {
+              // 渲染合并后的playing_summary消息组
+              const summaryGroupMsg = message as PlayingSummaryGroupMessage;
+              return (
+                <div key={summaryGroupMsg.id} className="flex justify-start">
+                  <div className="max-w-[80%] rounded-lg px-4 py-2 bg-blue-50 text-gray-900 border border-blue-200">
+                    <div className="text-sm whitespace-pre-wrap wrap-break-word">
+                      {summaryGroupMsg.content}
+                    </div>
+                  </div>
+                </div>
+              );
+            } else if (message.type === 'planning-group') {
               // 渲染合并后的planning消息组
               // 确保消息是 PlanningGroupMessage 类型
               const planningGroupMsg = message as PlanningGroupMessage;
@@ -331,7 +427,7 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                         ></path>
                       </svg>
                       <span className="text-sm font-medium text-yellow-700">
-                        大模型思考过程 ：
+                        思考过程 ：
                       </span>
                       {collapsedStates[planningGroupMsg.id] ? (
                         <svg
@@ -379,17 +475,17 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                         className="custom-small-steps"
                         items={[
                           {
-                            title: '下载歌曲',
+                            title: '搜索歌曲',
                             description: '',
                             status: getStepStatus(
                               planningGroupMsg,
-                              '下载歌曲',
+                              '搜索歌曲',
                               chatMessages
                             ),
                             icon:
                               getStepStatus(
                                 planningGroupMsg,
-                                '下载歌曲',
+                                '搜索歌曲',
                                 chatMessages
                               ) === 'process' ? (
                                 <LoadingOutlined style={{ fontSize: '16px' }} />
@@ -413,17 +509,40 @@ const PerformPanel = ({}: AssistantPanelProps) => {
                               ) : null,
                           },
                           {
-                            title: '解析参数',
-                            description: '',
+                            title: '解析硬件参数',
+                            description:
+                              getStepStatus(
+                                planningGroupMsg,
+                                '解析硬件参数',
+                                chatMessages
+                              ) === 'process' ||
+                              getStepStatus(
+                                planningGroupMsg,
+                                '解析硬件参数',
+                                chatMessages
+                              ) === 'finish' ? (
+                                <div>
+                                  <div>
+                                    左右臂：6自由度机械臂UR3E、左右手：21自由度腱绳灵巧手TermiHand。
+                                  </div>
+                                  {secondLineVisible[planningGroupMsg.id] && (
+                                    <div>
+                                      经分析，机械臂存在移动时延0.2s以上，灵巧手小拇指可拓展按键一个。
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                ''
+                              ),
                             status: getStepStatus(
                               planningGroupMsg,
-                              '解析参数',
+                              '解析硬件参数',
                               chatMessages
                             ),
                             icon:
                               getStepStatus(
                                 planningGroupMsg,
-                                '解析参数',
+                                '解析硬件参数',
                                 chatMessages
                               ) === 'process' ? (
                                 <LoadingOutlined style={{ fontSize: '16px' }} />
@@ -489,9 +608,10 @@ const PerformPanel = ({}: AssistantPanelProps) => {
         )}
 
         {/* 加载状态 - 仅在收到数据后显示 */}
-        {isLoading &&
+        {/* {isLoading &&
           hasReceivedData &&
-          chatMessages[chatMessages.length - 1]?.type !== 'planning' && (
+          chatMessages[chatMessages.length - 1]?.type !== 'planning' && ( */}
+          {hasReceivedData && (
             <div className="flex justify-start">
               <div className="flex items-center text-sm text-gray-600">
                 <span className="flex items-center">

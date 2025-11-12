@@ -22,208 +22,157 @@ interface VideoPlayerProps {
   rtmpUrl?: string; // 可选的RTMP URL参数
 }
 
-const VideoPlayer = ({
-  isPlaying,
-  rtmpUrl = 'rtmp://192.168.100.63/live/realsense',
-}: VideoPlayerProps) => {
+const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const flvPlayerRef = useRef<FlvPlayer | null>(null);
   const [fallbackToHls, setFallbackToHls] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    let flvPlayer: FlvPlayer | null = null;
-    let flvJs: FlvJs | null = null;
-    let playAttemptTimeout: NodeJS.Timeout | null = null;
-    // 保存当前的video元素引用，以防止在清理函数中使用可能已更改的ref
-    const videoElement = videoRef.current;
+  // 将 RTMP URL 转换为可播放的格式
+  const convertUrl = (url?: string) => {
+    if (!url) return null;
 
-    const loadFlvJs = async () => {
-      // 首先清理之前的播放实例
-      if (flvPlayerRef.current) {
-        flvPlayerRef.current.destroy();
-        flvPlayerRef.current = null;
-      }
+    // 如果是 RTMP URL，尝试转换为 HTTP-FLV
+    if (url.startsWith('rtmp://')) {
+      // rtmp://192.168.100.51/live/realsense
+      // 转换为 http://192.168.100.51:8080/live/realsense.flv
+      const urlParts = url.replace('rtmp://', '').split('/');
+      console.log('urlParts: ', urlParts);
+      const host = urlParts[0];
+      const path = urlParts.slice(1).join('/');
 
-      // 确保视频元素已重置
-      if (videoElement) {
-        videoElement.pause();
-        videoElement.removeAttribute('src');
-        videoElement.load();
-      }
-
-      // 如果不需要播放或已经切换到HLS模式，则直接返回
-      if (!isPlaying || fallbackToHls || !videoElement) {
-        return;
-      }
-
-      // 添加延时，确保之前的播放操作已完全停止
-      playAttemptTimeout = setTimeout(async () => {
-        if (typeof window !== 'undefined') {
-          try {
-            // 仅在客户端导入flv.js
-            const flvModule = await import('flv.js');
-            // 使用类型断言处理类型问题
-            flvJs = (flvModule.default || flvModule) as unknown as FlvJs;
-
-            if (
-              flvJs &&
-              flvJs.isSupported() &&
-              videoElement &&
-              isPlaying &&
-              !fallbackToHls
-            ) {
-              // 注意：这里需要使用HTTP-FLV流而不是RTMP流
-              // RTMP协议(rtmp://)不被浏览器直接支持，需要使用HTTP-FLV(http://)或HLS(http://)格式
-              // 使用原始RTMP流地址的对应HTTP-FLV地址
-              // 注意：这里需要确保服务器已经配置了将RTMP流转换为HTTP-FLV流
-              // 如果没有这样的转换服务，这个地址将无法访问
-              // 从提供的RTMP URL中提取流标识符
-              const streamKey = rtmpUrl.split('/').pop() || 'realsense';
-
-              flvPlayer = flvJs.createPlayer({
-                type: 'flv',
-                // 假设流媒体服务器在同一IP上的不同端口提供HTTP-FLV服务
-                url: `http://192.168.100.63:8080/live/${streamKey}.flv`,
-              });
-
-              // 添加错误处理
-              flvPlayer.on('error', (err: unknown) => {
-                console.error('flv player error:', err);
-                setErrorMessage(
-                  `视频加载失败: ${
-                    err instanceof Error ? err.message : '未知错误'
-                  }`
-                );
-                setFallbackToHls(true); // 失败时尝试使用HLS
-              });
-
-              flvPlayer.attachMediaElement(videoElement);
-              flvPlayer.load();
-
-              try {
-                await flvPlayer.play();
-                flvPlayerRef.current = flvPlayer;
-              } catch (err) {
-                console.error('播放失败:', err);
-                setErrorMessage(
-                  `播放失败: ${err instanceof Error ? err.message : '未知错误'}`
-                );
-                setFallbackToHls(true);
-              }
-            }
-          } catch (error) {
-            console.error('flv.js 加载失败:', error);
-            setErrorMessage(
-              `flv.js 加载失败: ${(error as Error)?.message || '未知错误'}`
-            );
-            setFallbackToHls(true); // 失败时尝试使用HLS
-          }
-        }
-      }, 300); // 增加延时时间，确保之前的播放操作已完全停止
-    };
-
-    loadFlvJs();
-
-    return () => {
-      // 清理定时器
-      if (playAttemptTimeout) {
-        clearTimeout(playAttemptTimeout);
-      }
-
-      // 清理flv播放器
-      if (flvPlayerRef.current) {
-        flvPlayerRef.current.destroy();
-        flvPlayerRef.current = null;
-      }
-
-      // 清理视频元素，使用保存的引用
-      if (videoElement) {
-        videoElement.pause();
-        videoElement.removeAttribute('src');
-        videoElement.load();
-      }
-    };
-  }, [isPlaying, fallbackToHls, rtmpUrl]);
-
-  // 如果flv.js失败，尝试使用原生HLS
-  useEffect(() => {
-    let playPromise: Promise<void> | undefined;
-    let hlsTimeoutId: NodeJS.Timeout | null = null;
-    // 保存当前的video元素引用，以防止在清理函数中使用可能已更改的ref
-    const videoElement = videoRef.current;
-
-    if (fallbackToHls && videoElement && isPlaying) {
-      // 在设置新的src之前，确保之前的播放已经停止
-      if (flvPlayerRef.current) {
-        flvPlayerRef.current.destroy();
-        flvPlayerRef.current = null;
-      }
-
-      // 清除之前的视频源
-      videoElement.pause();
-      videoElement.removeAttribute('src');
-      videoElement.load();
-
-      // 添加延时，确保之前的播放操作已完全停止
-      hlsTimeoutId = setTimeout(() => {
-        if (videoElement) {
-          // 尝试使用HLS
-          // 从提供的RTMP URL中提取流标识符
-          const streamKey = rtmpUrl.split('/').pop() || 'realsense';
-          videoElement.src = `http://192.168.100.63:8080/live/${streamKey}.m3u8`;
-
-          // 使用可中断的方式播放
-          try {
-            playPromise = videoElement.play();
-            if (playPromise !== undefined) {
-              playPromise.catch((err) => {
-                console.error('HLS播放失败:', err);
-                setErrorMessage(
-                  `HLS播放失败: ${
-                    err instanceof Error ? err.message : '未知错误'
-                  }`
-                );
-              });
-            }
-          } catch (err) {
-            console.error('HLS播放异常:', err);
-            setErrorMessage(
-              `HLS播放异常: ${err instanceof Error ? err.message : '未知错误'}`
-            );
-          }
-        }
-      }, 300); // 增加延时时间，确保之前的播放操作已完全停止
+      return {
+        flv: `http://${host}:8082/${path}.flv`,
+        hls: `http://${host}:8082/${path}.m3u8`,
+        original: url,
+      };
     }
 
-    return () => {
-      // 清理定时器
-      if (hlsTimeoutId) {
-        clearTimeout(hlsTimeoutId);
+    // 如果已经是 HTTP URL，直接返回
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      if (url.endsWith('.flv')) {
+        return { flv: url, hls: null, original: url };
+      } else if (url.endsWith('.m3u8')) {
+        return { flv: null, hls: url, original: url };
       }
+    }
 
-      // 如果组件卸载时有正在进行的播放请求，则中断它
-      if (videoElement) {
-        videoElement.pause();
-        videoElement.removeAttribute('src');
-        videoElement.load();
+    return { flv: null, hls: null, original: url };
+  };
+
+  useEffect(() => {
+    if (!isPlaying || !rtmpUrl || !videoRef.current) return;
+
+    const urls = convertUrl(rtmpUrl);
+    if (!urls) {
+      setErrorMessage('无效的流地址');
+      return;
+    }
+
+    // 清理之前的播放器
+    if (flvPlayerRef.current) {
+      try {
+        flvPlayerRef.current.destroy();
+        flvPlayerRef.current = null;
+      } catch (e) {
+        console.error('清理播放器失败:', e);
+      }
+    }
+
+    const initPlayer = async () => {
+      try {
+        // 动态导入 flv.js
+        const flvjs = (await import('flv.js')).default as unknown as FlvJs;
+
+        if (!flvjs.isSupported()) {
+          setErrorMessage(
+            '浏览器不支持 FLV 播放，请使用 Chrome 或 Edge 浏览器'
+          );
+          return;
+        }
+
+        // 尝试使用 HTTP-FLV
+        if (urls.flv && videoRef.current) {
+          setErrorMessage(null);
+          const player = flvjs.createPlayer({
+            type: 'flv',
+            url: urls.flv,
+          });
+
+          player.attachMediaElement(videoRef.current);
+
+          player.on('error', (error) => {
+            console.error('error: ', error);
+            setErrorMessage(
+              `播放失败：无法连接到流服务器 ${urls.flv}。\n` +
+                '请确保：\n' +
+                '1. RTMP 服务器正在运行\n' +
+                '2. 服务器支持 HTTP-FLV 输出（端口 8080）\n' +
+                '3. 流名称正确\n\n' +
+                '原始地址: ' +
+                urls.original
+            );
+
+            // 尝试 HLS 作为后备
+            if (urls.hls && !fallbackToHls) {
+              setFallbackToHls(true);
+            }
+          });
+
+          player.load();
+          await player.play();
+
+          flvPlayerRef.current = player;
+        } else if (urls.hls && videoRef.current) {
+          // 使用 HLS (Safari 原生支持，其他浏览器可能需要 hls.js)
+          setErrorMessage('尝试使用 HLS 播放...');
+          videoRef.current.src = urls.hls;
+          await videoRef.current.play();
+          setErrorMessage(null);
+        } else {
+          setErrorMessage(
+            `无法播放 RTMP 流，需要服务器端支持。\n\n` +
+              `原始地址: ${urls.original}\n\n` +
+              `建议：\n` +
+              `1. 使用 nginx-rtmp-module 将 RTMP 转为 HTTP-FLV\n` +
+              `2. 或使用 FFmpeg 转码为 HLS\n` +
+              `3. 或使用 Node-Media-Server 等流媒体服务器`
+          );
+        }
+      } catch (error) {
+        setErrorMessage('播放器初始化失败: ' + (error as Error).message);
       }
     };
-  }, [fallbackToHls, isPlaying, rtmpUrl]);
+
+    initPlayer();
+
+    // 清理函数
+    return () => {
+      if (flvPlayerRef.current) {
+        try {
+          flvPlayerRef.current.destroy();
+          flvPlayerRef.current = null;
+        } catch (e) {
+          console.error('清理播放器失败:', e);
+        }
+      }
+    };
+  }, [isPlaying, rtmpUrl, fallbackToHls]);
 
   return (
     <div className="w-full max-w-6xl mx-auto rounded-lg overflow-hidden flex flex-col items-center justify-center">
-      {errorMessage && (
-        <div className="bg-red-100 text-red-700 p-2 text-sm w-[90%] mx-auto text-center">
+      {/* {errorMessage && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 text-sm w-[90%] mx-auto mb-4 rounded whitespace-pre-line">
           {errorMessage}
         </div>
-      )}
+      )} */}
       <div className="flex justify-center items-center w-full">
         <video
           ref={videoRef}
-          className="w-[90%] aspect-video min-h-[500px] h-[55vh] mx-auto block"
+          className="w-[90%] aspect-video min-h-[500px] h-[55vh] mx-auto block bg-black"
           controls
           autoPlay
+          muted
         />
       </div>
     </div>
@@ -234,9 +183,7 @@ interface LearnPageProps {
   rtmpUrl?: string; // 可选的RTMP URL参数
 }
 
-export default function LearnPage({
-  rtmpUrl = 'rtmp://192.168.100.63/live/realsense',
-}: LearnPageProps = {}) {
+export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentRtmpUrl, setCurrentRtmpUrl] = useState(rtmpUrl);
 
@@ -271,7 +218,7 @@ export default function LearnPage({
 
         {/* 当前流地址显示 */}
         <div className="text-xs text-gray-500 mb-2 w-full max-w-6xl mx-auto">
-          当前流: {currentRtmpUrl}
+          测试当前流: {currentRtmpUrl}
         </div>
 
         {/* 视频播放区域 */}

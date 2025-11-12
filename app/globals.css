@@ -203,3 +203,16 @@ body {
 .ant-steps-item-icon * {
   border: none !important;
 }
+
+/* 移除步骤描述的下边距并保持颜色一致 */
+.ant-steps-item-description {
+  padding-bottom: 0 !important;
+  color: #00000073 !important;
+}
+
+/* 确保所有状态下的描述颜色一致 */
+.ant-steps-item-wait .ant-steps-item-description,
+.ant-steps-item-process .ant-steps-item-description,
+.ant-steps-item-finish .ant-steps-item-description {
+  color: #00000073 !important;
+}

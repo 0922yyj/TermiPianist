@@ -35,6 +35,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
       }
 
       const data = await response.json();
+      console.log('data: ', data);
       emit('change-stream', { url: data.rtmp_url });
       emit('start-play');
 
@@ -69,7 +70,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
         });
 
         // 倒计时 toast
-        let countdown = 3;
+        let countdown = 2;
         const toastId = toast.success(
           `学习完成！${countdown}秒后即将跳转演奏页面进行弹奏`
         );
@@ -95,7 +96,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
           useAssistantStore.getState().clearPlayingLogs();
           useAssistantStore.getState().clearKeyPositionMessages();
           router.push('/perform');
-        }, 3000);
+        }, 2000);
       }
 
       return data;

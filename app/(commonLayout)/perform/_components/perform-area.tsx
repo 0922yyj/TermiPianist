@@ -149,7 +149,7 @@ export default function PerformArea() {
   const totalWhiteKeys = whiteKeys.length;
   const middleKeyIndex = Math.floor(totalWhiteKeys / 2);
 
-  const handleKeyClick = (id: string) => {
+  {/*const handleKeyClick = (id: string) => {
     // 查找对应的键并确定是左侧还是右侧
     const whiteKey = whiteKeys.find((key) => key.id === id);
     if (whiteKey) {
@@ -206,7 +206,7 @@ export default function PerformArea() {
         }
       }
     }, 300);
-  };
+  };*/}
 
   return (
     <div className="flex flex-col border-1 border-[#41719C] rounded-md p-4">
@@ -290,11 +290,11 @@ export default function PerformArea() {
                         : 'bg-[#FCC473]'
                       : 'bg-gradient-to-b from-white to-gray-50 hover:bg-gray-50'
                   }`}
-                  onClick={() => handleKeyClick(key.id)}
+                  // onClick={() => handleKeyClick(key.id)}
                 >
-                  <span className="absolute bottom-1 text-[10px] text-gray-400">
+                  {/* <span className="absolute bottom-1 text-[10px] text-gray-400">
                     {key.midiNumber}
-                  </span>
+                  </span> */}
                 </div>
               );
             })}
@@ -341,11 +341,11 @@ export default function PerformArea() {
                     width: `${whiteKeyWidth * 0.65}%`,
                     zIndex: 5,
                   }}
-                  onClick={() => handleKeyClick(blackKey.id)}
+                  // onClick={() => handleKeyClick(blackKey.id)}
                 >
-                  <span className="absolute bottom-1 text-[10px] text-white flex justify-center w-full">
+                  {/* <span className="absolute bottom-1 text-[10px] text-white flex justify-center w-full">
                     {blackKey.midiNumber}
-                  </span>
+                  </span> */}
                 </div>
               );
             })}
