@@ -12,8 +12,32 @@ interface FlvPlayer {
   on: (event: string, callback: (error: unknown) => void) => void;
 }
 
+interface FlvMediaDataSource {
+  type: string;
+  url: string;
+  isLive?: boolean;
+  hasAudio?: boolean;
+  hasVideo?: boolean;
+}
+
+interface FlvConfig {
+  enableWorker?: boolean;
+  enableStashBuffer?: boolean;
+  stashInitialSize?: number;
+  isLive?: boolean;
+  lazyLoad?: boolean;
+  lazyLoadMaxDuration?: number;
+  seekType?: string;
+  liveBufferLatencyChasing?: boolean;
+  liveBufferLatencyMaxLatency?: number;
+  liveBufferLatencyMinRemain?: number;
+}
+
 interface FlvJs {
-  createPlayer: (config: { type: string; url: string }) => FlvPlayer;
+  createPlayer: (
+    mediaDataSource: FlvMediaDataSource,
+    config?: FlvConfig
+  ) => FlvPlayer;
   isSupported: () => boolean;
 }
 
@@ -27,6 +51,7 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
   const flvPlayerRef = useRef<FlvPlayer | null>(null);
   const [fallbackToHls, setFallbackToHls] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const latencyCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 将 RTMP URL 转换为可播放的格式
   const convertUrl = (url?: string) => {
@@ -94,10 +119,28 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
         // 尝试使用 HTTP-FLV
         if (urls.flv && videoRef.current) {
           setErrorMessage(null);
-          const player = flvjs.createPlayer({
-            type: 'flv',
-            url: urls.flv,
-          });
+          const player = flvjs.createPlayer(
+            {
+              type: 'flv',
+              url: urls.flv,
+              isLive: true, // 标记为直播流
+              hasAudio: false, // 如果有音频，改为true
+              hasVideo: true,
+            },
+            {
+              enableWorker: false, // 在某些情况下禁用Worker可以减少延迟
+              enableStashBuffer: false, // 禁用IO存储缓冲区
+              stashInitialSize: 128, // 减少初始缓冲大小（KB）
+              isLive: true,
+              lazyLoad: false,
+              lazyLoadMaxDuration: 0.2,
+              seekType: 'range',
+              // 低延迟直播配置
+              liveBufferLatencyChasing: true, // 启用延迟追赶
+              liveBufferLatencyMaxLatency: 1.5, // 最大延迟1.5秒
+              liveBufferLatencyMinRemain: 0.3, // 最小保留0.3秒缓冲
+            }
+          );
 
           player.attachMediaElement(videoRef.current);
 
@@ -123,6 +166,35 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
           await player.play();
 
           flvPlayerRef.current = player;
+
+          // 启动延迟监控：自动追赶到最新帧
+          if (videoRef.current) {
+            const video = videoRef.current;
+
+            // 清除之前的定时器
+            if (latencyCheckIntervalRef.current) {
+              clearInterval(latencyCheckIntervalRef.current);
+            }
+
+            // 每秒检查一次延迟
+            latencyCheckIntervalRef.current = setInterval(() => {
+              if (!video.paused && video.buffered.length > 0) {
+                const bufferedEnd = video.buffered.end(
+                  video.buffered.length - 1
+                );
+                const currentTime = video.currentTime;
+                const latency = bufferedEnd - currentTime;
+
+                // 如果延迟超过2秒，跳到最新位置
+                if (latency > 2) {
+                  console.log(
+                    `检测到延迟: ${latency.toFixed(2)}秒，跳转到最新位置`
+                  );
+                  video.currentTime = bufferedEnd - 0.3; // 保留0.3秒缓冲
+                }
+              }
+            }, 1000);
+          }
         } else if (urls.hls && videoRef.current) {
           // 使用 HLS (Safari 原生支持，其他浏览器可能需要 hls.js)
           setErrorMessage('尝试使用 HLS 播放...');
@@ -148,6 +220,12 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
 
     // 清理函数
     return () => {
+      // 清除延迟检测定时器
+      if (latencyCheckIntervalRef.current) {
+        clearInterval(latencyCheckIntervalRef.current);
+        latencyCheckIntervalRef.current = null;
+      }
+
       if (flvPlayerRef.current) {
         try {
           flvPlayerRef.current.destroy();
@@ -173,6 +251,11 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
           controls
           autoPlay
           muted
+          playsInline // 移动端内联播放，减少延迟
+          preload="auto" // 预加载
+          style={{
+            objectFit: 'contain',
+          }}
         />
       </div>
     </div>
@@ -223,7 +306,10 @@ export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
 
         {/* 视频播放区域 */}
         {isPlaying && (
-          <VideoPlayer isPlaying={isPlaying} rtmpUrl={currentRtmpUrl} />
+          <VideoPlayer
+            isPlaying={isPlaying}
+            rtmpUrl={currentRtmpUrl}
+          />
         )}
       </div>
     </div>
