@@ -300,15 +300,11 @@ export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
         </div>
 
         {/* 当前流地址显示 */}
-        <div className="text-xs text-gray-500 mb-2 w-full max-w-6xl mx-auto">
-          测试当前流: {currentRtmpUrl}
-        </div>
-
         {/* 视频播放区域 */}
         {isPlaying && (
           <VideoPlayer
             isPlaying={isPlaying}
-            rtmpUrl={currentRtmpUrl}
+            rtmpUrl={'rtmp://192.168.100.51/live/realsense'}
           />
         )}
       </div>

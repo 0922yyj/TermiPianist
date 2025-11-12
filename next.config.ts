@@ -4,6 +4,7 @@ const DEFAULT_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH;
 
 const nextConfig = {
   // reactStrictMode: false,
+  devIndicators: false, // 禁用开发工具指示器
   output: 'standalone', // 使用standalone输出模式
   outputFileTracingExcludes: {
     '*': ['node_modules/**/*'],
@@ -30,7 +31,6 @@ const nextConfig = {
   },
 
   async rewrites() {
-
     if (process.env.NODE_ENV === 'development') {
       const rewrites = [
         {

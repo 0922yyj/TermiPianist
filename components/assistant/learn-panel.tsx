@@ -1,10 +1,9 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { emit } from '@/hooks/user-emitter';
 import { useAssistantStore } from '@/stores/assistant';
-import { debounce } from 'lodash';
 import { toast } from 'sonner';
 
 interface AssistantPanelProps {
@@ -105,32 +104,15 @@ const LearnPanel = ({}: AssistantPanelProps) => {
     }
   };
 
-  // 创建防抖函数
-  const debouncedStartLearning = debounce(
-    () => {
-      setDisabled(true);
-      startLearning();
-    },
-    5000,
-    { leading: true, trailing: false }
-  );
+  const handleStartLearning = () => {
+    setDisabled(true);
+    startLearning();
+  };
 
-  const debouncedEndLearning = debounce(
-    () => {
-      setDisabled(true);
-      endLearning();
-    },
-    2000,
-    { leading: true, trailing: false }
-  );
-
-  // 组件卸载时清除防抖函数
-  useEffect(() => {
-    return () => {
-      debouncedStartLearning.cancel();
-      debouncedEndLearning.cancel();
-    };
-  }, [debouncedStartLearning, debouncedEndLearning]);
+  const handleEndLearning = () => {
+    setDisabled(false);
+    endLearning();
+  };
 
   return (
     <div className="flex h-full flex-col w-full text-black">
@@ -149,14 +131,14 @@ const LearnPanel = ({}: AssistantPanelProps) => {
           <div className="flex flex-col items-center mt-6 space-y-4">
             <button
               className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-700"
-              onClick={debouncedStartLearning}
+              onClick={handleStartLearning}
               disabled={disabled}
             >
               开始演奏
             </button>
             <button
               className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-700"
-              onClick={debouncedEndLearning}
+              onClick={handleEndLearning}
               disabled={!disabled} // 只有在开始演奏按钮被禁用时（即已开始演奏）才能点击
             >
               结束演奏
