@@ -42,8 +42,8 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
       const path = urlParts.slice(1).join('/');
 
       return {
-        flv: `http://${host}:8082/${path}.flv`,
-        hls: `http://${host}:8082/${path}.m3u8`,
+        flv: `http://${host}:8080/${path}.flv`,
+        hls: `http://${host}:8080/${path}.m3u8`,
         original: url,
       };
     }
