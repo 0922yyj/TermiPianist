@@ -307,7 +307,10 @@ const PerformPanel = ({}: AssistantPanelProps) => {
       (msg) => msg.type === 'voice_end'
     );
     const hasEnd = lastSessionMessages.some((msg) => msg.type === 'end');
-
+    const hasPlanning = lastSessionMessages.some((msg) => msg.type === 'planning');
+    if (hasPlanning) {
+      return true;
+    }
     // 当有 voice_end 但没有 end 时，禁用按钮
     if (hasVoiceEnd && !hasEnd) {
       return true;
