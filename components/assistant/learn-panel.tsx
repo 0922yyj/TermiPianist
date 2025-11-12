@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { emit } from '@/hooks/user-emitter';
 import { useAssistantStore } from '@/stores/assistant';
 import { debounce } from 'lodash';
+import { toast } from 'sonner';
 
 interface AssistantPanelProps {
   onClose?: () => void;
@@ -67,7 +68,30 @@ const LearnPanel = ({}: AssistantPanelProps) => {
           mode: 'learning',
         });
 
-        router.push('/perform');
+        // 倒计时 toast
+        let countdown = 3;
+        const toastId = toast.success(
+          `学习完成！${countdown}秒后即将跳转演奏页面进行弹奏`
+        );
+
+        const countdownInterval = setInterval(() => {
+          countdown--;
+          if (countdown > 0) {
+            toast.success(
+              `学习完成！${countdown}秒后即将跳转演奏页面进行弹奏`,
+              {
+                id: toastId,
+              }
+            );
+          } else {
+            clearInterval(countdownInterval);
+          }
+        }, 1000);
+
+        setTimeout(() => {
+          toast.dismiss(toastId); // 在跳转前关闭 toast
+          router.push('/perform');
+        }, 3000);
       }
 
       return data;
@@ -77,15 +101,23 @@ const LearnPanel = ({}: AssistantPanelProps) => {
   };
 
   // 创建防抖函数
-  const debouncedStartLearning = debounce(() => {
-    setDisabled(true);
-    startLearning();
-  }, 2000);
+  const debouncedStartLearning = debounce(
+    () => {
+      setDisabled(true);
+      startLearning();
+    },
+    5000,
+    { leading: true, trailing: false }
+  );
 
-  const debouncedEndLearning = debounce(() => {
-    setDisabled(true);
-    endLearning();
-  }, 2000);
+  const debouncedEndLearning = debounce(
+    () => {
+      setDisabled(true);
+      endLearning();
+    },
+    2000,
+    { leading: true, trailing: false }
+  );
 
   // 组件卸载时清除防抖函数
   useEffect(() => {
@@ -111,14 +143,14 @@ const LearnPanel = ({}: AssistantPanelProps) => {
           <p className="text-base">请演奏一段30s以内的曲目，供机器人学习</p>
           <div className="flex flex-col items-center mt-6 space-y-4">
             <button
-              className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer disabled:cursor-not-allowed"
+              className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-700"
               onClick={debouncedStartLearning}
               disabled={disabled}
             >
               开始演奏
             </button>
             <button
-              className="px-4 py-1.5 text-sm bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-700"
               onClick={debouncedEndLearning}
               disabled={!disabled} // 只有在开始演奏按钮被禁用时（即已开始演奏）才能点击
             >

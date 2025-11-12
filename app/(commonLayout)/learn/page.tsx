@@ -216,14 +216,6 @@ const VideoPlayer = ({
       {errorMessage && (
         <div className="bg-red-100 text-red-700 p-2 text-sm w-[90%] mx-auto text-center">
           {errorMessage}
-          <p className="mt-1 text-xs">
-            注意:
-            浏览器不支持直接播放RTMP流，请确保服务器提供了HTTP-FLV或HLS格式的流。
-          </p>
-          <p className="mt-1 text-xs text-red-800">
-            需要配置流媒体服务器（如Nginx-RTMP）将RTMP流
-            {rtmpUrl} 转换为 HTTP-FLV 和 HLS 格式。
-          </p>
         </div>
       )}
       <div className="flex justify-center items-center w-full">
