@@ -90,6 +90,10 @@ const LearnPanel = ({}: AssistantPanelProps) => {
 
         setTimeout(() => {
           toast.dismiss(toastId); // 在跳转前关闭 toast
+          // 清空所有消息和日志
+          useAssistantStore.getState().clearMessages();
+          useAssistantStore.getState().clearPlayingLogs();
+          useAssistantStore.getState().clearKeyPositionMessages();
           router.push('/perform');
         }, 3000);
       }

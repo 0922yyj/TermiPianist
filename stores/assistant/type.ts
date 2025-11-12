@@ -41,5 +41,6 @@ export interface AssistantState {
   addKeyPositionMessage: (msg: Message) => void;
   clearPlayingLogs: () => void;
   clearKeyPositionMessages: () => void;
+  clearMessages: () => void;
   setLearningData: (data: LearningData) => void;
 }

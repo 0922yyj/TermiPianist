@@ -111,7 +111,12 @@ export const useStream = (currentSessionId: string | null) => {
                             // 如果是结束消息，设置流结束状态
                             setIsStreamEnded(true);
                             setIsProcessing(false);
+                            // 添加end到普通消息
                             useAssistantStore.getState().addMessages(aiMessage);
+                            // 也添加end到键位数据消息
+                            useAssistantStore
+                              .getState()
+                              .addKeyPositionMessage(aiMessage);
                           } else if (jsonData.type === 'voice_end') {
                             // 如果是语音结束消息，保存到store
                             useAssistantStore.getState().addMessages(aiMessage);
@@ -132,7 +137,7 @@ export const useStream = (currentSessionId: string | null) => {
                                 );
                               }
                             } catch (error) {
-                              console.error('解析key_position内容失败:', error);
+                              
                             }
 
                             // 使用addKeyPositionMessage方法

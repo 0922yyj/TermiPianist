@@ -65,4 +65,9 @@ export const useAssistantStore = create<AssistantState>((set) => ({
     set(() => ({
       keyPositionMessages: [],
     })),
+  // 清空普通消息
+  clearMessages: () =>
+    set(() => ({
+      messages: [],
+    })),
 }));

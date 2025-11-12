@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useReducer, useRef } from 'react';
-// import Image from 'next/image';
+import { useEffect, useReducer, useRef, useState } from 'react';
+import Image from 'next/image';
 import { generatePianoKeys, getBlackKeyPosition } from './piano';
 import { useAssistantStore } from '@/stores/assistant';
 import { KeyPositionContent } from '@/stores/assistant/type';
@@ -11,7 +11,8 @@ type ActiveKeysState = Map<number, { keyId: string; hand: string }>;
 // 定义动作类型
 type ActiveKeysAction =
   | { type: 'NOTE_ON'; midiId: number; keyId: string; hand: string }
-  | { type: 'NOTE_OFF'; midiId: number };
+  | { type: 'NOTE_OFF'; midiId: number }
+  | { type: 'CLEAR_ALL' };
 
 // 定义reducer
 function activeKeysReducer(
@@ -27,6 +28,8 @@ function activeKeysReducer(
     case 'NOTE_OFF':
       newState.delete(action.midiId);
       return newState;
+    case 'CLEAR_ALL':
+      return new Map();
     default:
       return state;
   }
@@ -36,6 +39,26 @@ export default function PerformArea() {
   // 从piano.tsx导入钢琴键盘数据
   const { whiteKeys, blackKeys } = generatePianoKeys();
 
+  // 辅助函数：根据 midiNumber 计算手掌位置的百分比
+  const calculateHandPosition = (midiNumber: number): number => {
+    // 找到对应的白键或黑键
+    const whiteKey = whiteKeys.find((key) => key.midiNumber === midiNumber);
+    const blackKey = blackKeys.find((key) => key.midiNumber === midiNumber);
+
+    if (whiteKey) {
+      // 白键：计算在所有白键中的索引，转换为百分比
+      const index = whiteKeys.findIndex((key) => key.midiNumber === midiNumber);
+      const whiteKeyWidth = 100 / whiteKeys.length;
+      return whiteKeyWidth * index + whiteKeyWidth * 0.2; // 偏移一点以居中
+    } else if (blackKey) {
+      // 黑键：使用黑键的定位逻辑
+      const whiteKeyIndex = getBlackKeyPosition(blackKey, whiteKeys);
+      const whiteKeyWidth = 100 / whiteKeys.length;
+      return whiteKeyIndex * whiteKeyWidth + whiteKeyWidth * 0.65;
+    }
+    return 0;
+  };
+
   // 使用useReducer存储激活的键，键为midi_id，值为{keyId, hand}
   const [activeKeys, dispatchActiveKeys] = useReducer(
     activeKeysReducer,
@@ -44,6 +67,10 @@ export default function PerformArea() {
   const keyPositionMessages = useAssistantStore(
     (state) => state.keyPositionMessages
   );
+
+  // 追踪左右手的当前位置（midiNumber）
+  const [leftHandPosition, setLeftHandPosition] = useState<number>(60); // 默认位置
+  const [rightHandPosition, setRightHandPosition] = useState<number>(69); // 默认位置
 
   useEffect(() => {}, [keyPositionMessages]);
 
@@ -65,8 +92,18 @@ export default function PerformArea() {
       // 添加到已处理集合
       processedMessageIdsRef.current.add(message.id);
 
+      // 检查是否为结束消息，如果是则清除所有高亮并重置手的位置
+      if (message.type === 'end') {
+        dispatchActiveKeys({ type: 'CLEAR_ALL' });
+        // 重置左右手位置到默认值
+        setLeftHandPosition(60);
+        setRightHandPosition(69);
+        return;
+      }
+
       // 处理消息内容
       const content = message.content as KeyPositionContent;
+      
 
       // 确保content是对象类型
       if (typeof content !== 'object' || !content) return;
@@ -91,7 +128,15 @@ export default function PerformArea() {
             keyId,
             hand,
           });
+
+          // 更新对应手的位置
+          if (hand === 'left') {
+            setLeftHandPosition(midiId);
+          } else if (hand === 'right') {
+            setRightHandPosition(midiId);
+          }
         } else if (action === 'note_off') {
+          
           dispatchActiveKeys({
             type: 'NOTE_OFF',
             midiId,
@@ -165,14 +210,14 @@ export default function PerformArea() {
 
   return (
     <div className="flex flex-col border-1 border-[#41719C] rounded-md p-4">
-      {/*{keyPositionMessages.map((message) => {
+      {/* {keyPositionMessages.map((message) => {
         // 检查content是否为对象，如果是则转换为JSON字符串显示
         const content =
           typeof message.content === 'object'
             ? JSON.stringify(message.content)
             : message.content;
         return <div key={message.id}>{content}</div>;
-      })}*/}
+      })} */}
       <h2 className="text-xl font-bold">演奏区域</h2>
 
       <div className="relative w-full overflow-x-auto mt-4 pb-4 h-[400px]">
@@ -306,17 +351,15 @@ export default function PerformArea() {
             })}
           </div>
         </div>
-        {/* <Image
+        <Image
           src="/left-palm.svg"
           width={80}
           height={80}
           alt="左手"
           loading="eager"
-          className="absolute top-[200px]"
+          className="absolute top-[200px] transition-all duration-300"
           style={{
-            left: `${
-              whiteKeys.find((key) => key.midiNumber === 95)?.position || 0
-            }px`,
+            left: `calc(${calculateHandPosition(leftHandPosition)}% - 40px)`,
           }}
         />
         <Image
@@ -325,13 +368,11 @@ export default function PerformArea() {
           height={80}
           alt="右手"
           loading="eager"
-          className="absolute top-[200px]"
+          className="absolute top-[200px] transition-all duration-300"
           style={{
-            left: `${
-              whiteKeys.find((key) => key.midiNumber === 108)?.position || 0
-            }px`,
+            left: `calc(${calculateHandPosition(rightHandPosition)}% - 40px)`,
           }}
-        /> */}
+        />
       </div>
 
       {/*<div className="flex justify-center items-center gap-64 mt-4">
