@@ -64,7 +64,7 @@ export default function HistoryPanel() {
                     <span>{new Date(item.startedAt).toLocaleString()}</span>
                   </div>
                   <div>
-                    <span className="mr-3">{item.status}</span>
+                    <span className="mr-3">{item.status==='ended' ? '已完成' : '进行中'}</span>
                     <span>{item.success ? '成功' : '失败'}</span>
                   </div>
                 </div>

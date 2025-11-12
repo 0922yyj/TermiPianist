@@ -30,6 +30,48 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* 禁用 Next.js 错误覆盖层 */}
+        {process.env.NODE_ENV === 'development' && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  // 禁用错误覆盖层
+                  const hideErrorOverlay = () => {
+                    const errorOverlay = document.querySelector('nextjs-portal');
+                    if (errorOverlay) {
+                      errorOverlay.style.display = 'none';
+                    }
+                    // 隐藏错误按钮
+                    const errorButton = document.querySelector('[data-nextjs-errors-dialog-left-right-close-button]');
+                    if (errorButton) {
+                      errorButton.style.display = 'none';
+                    }
+                  };
+                  
+                  // 使用 MutationObserver 监听 DOM 变化
+                  const observer = new MutationObserver(hideErrorOverlay);
+                  observer.observe(document.documentElement, {
+                    childList: true,
+                    subtree: true
+                  });
+                  
+                  // 页面加载时执行一次
+                  if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', hideErrorOverlay);
+                  } else {
+                    hideErrorOverlay();
+                  }
+                  
+                  // 定时检查（备用方案）
+                  setInterval(hideErrorOverlay, 100);
+                })();
+              `,
+            }}
+          />
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

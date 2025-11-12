@@ -304,7 +304,7 @@ export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
         {isPlaying && (
           <VideoPlayer
             isPlaying={isPlaying}
-            rtmpUrl={'rtmp://192.168.100.51/live/realsense'}
+            rtmpUrl={ currentRtmpUrl }
           />
         )}
       </div>
