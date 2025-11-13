@@ -98,6 +98,8 @@ export default function PerformArea() {
         // 重置左右手位置到默认值
         setLeftHandPosition(60);
         setRightHandPosition(69);
+        // 清空已处理消息ID集合，为下次会话做准备
+        processedMessageIdsRef.current.clear();
         return;
       }
 
