@@ -16,7 +16,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
   const router = useRouter();
 
   const [disabled, setDisabled] = useState(false);
-
+  const [disabled2, setDisabled2] = useState(false);
   const startLearning = async () => {
     try {
       const response = await fetch(
@@ -34,6 +34,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
       }
 
       const data = await response.json();
+      setDisabled2(true);
       console.log('data: ', data);
       emit('change-stream', { url: data.rtmp_url });
       emit('start-play');
@@ -110,7 +111,9 @@ const LearnPanel = ({}: AssistantPanelProps) => {
   };
 
   const handleEndLearning = () => {
-    setDisabled(false);
+    setDisabled2(false);
+    // 立即通知页面显示加载遮罩，避免看到视频黑屏
+    emit('end-learning');
     endLearning();
   };
 
@@ -139,7 +142,7 @@ const LearnPanel = ({}: AssistantPanelProps) => {
             <button
               className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-700"
               onClick={handleEndLearning}
-              disabled={!disabled} // 只有在开始演奏按钮被禁用时（即已开始演奏）才能点击
+              disabled={!disabled2} // 只有在开始演奏按钮被禁用时（即已开始演奏）才能点击
             >
               结束演奏
             </button>

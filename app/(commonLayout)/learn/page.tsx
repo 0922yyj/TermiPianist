@@ -269,6 +269,7 @@ interface LearnPageProps {
 export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentRtmpUrl, setCurrentRtmpUrl] = useState(rtmpUrl);
+  const [isEnding, setIsEnding] = useState(false); // 新增：控制结束时的遮罩层
 
   // 使用useEmitter监听来自panel.tsx的开始演奏按钮点击事件
   useEmitter('start-play', () => {
@@ -288,6 +289,11 @@ export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
     }
   });
 
+  // 监听结束演奏事件，显示遮罩层
+  useEmitter('end-learning', () => {
+    setIsEnding(true);
+  });
+
   return (
     <div className="text-black flex flex-col justify-between gap-4 h-full w-full">
       {/* 演奏区域标题 */}
@@ -302,10 +308,25 @@ export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
         {/* 当前流地址显示 */}
         {/* 视频播放区域 */}
         {isPlaying && (
-          <VideoPlayer
-            isPlaying={isPlaying}
-            rtmpUrl={ currentRtmpUrl }
-          />
+          <div className="relative w-full">
+            <VideoPlayer
+              isPlaying={isPlaying}
+              rtmpUrl={'rtmp://192.168.1.167/live/realsense'}
+            />
+            {/* 结束演奏时的遮罩层 */}
+            {isEnding && (
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-50 rounded-lg">
+                <div className="flex flex-col items-center space-y-4 text-white">
+                  {/* 加载动画 */}
+                  <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="text-2xl font-semibold">处理中...</div>
+                  <div className="text-sm text-gray-300">
+                    正在保存您的演奏数据
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

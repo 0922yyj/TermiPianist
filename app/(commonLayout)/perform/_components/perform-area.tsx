@@ -258,13 +258,13 @@ export default function PerformArea() {
           <div className="absolute top-6 left-0 w-full h-1 bg-red-500 z-10"></div>
 
           {/* 中间分隔线 - 将钢琴分为左右两半 */}
-          <div
+          {/* <div
             className="absolute top-6 bottom-0 w-1 bg-purple-500 z-20"
             style={{
               left: `${(100 / whiteKeys.length) * middleKeyIndex}%`,
               height: 'calc(100% - 6px)',
             }}
-          ></div>
+          ></div> */}
 
           {/* 白键 */}
           <div className="white-keys flex h-full pt-6 relative">
@@ -292,9 +292,9 @@ export default function PerformArea() {
                   }`}
                   // onClick={() => handleKeyClick(key.id)}
                 >
-                  {/* <span className="absolute bottom-1 text-[10px] text-gray-400">
+                  <span className="absolute bottom-1 text-[10px] text-gray-400">
                     {key.midiNumber}
-                  </span> */}
+                  </span>
                 </div>
               );
             })}
@@ -343,9 +343,9 @@ export default function PerformArea() {
                   }}
                   // onClick={() => handleKeyClick(blackKey.id)}
                 >
-                  {/* <span className="absolute bottom-1 text-[10px] text-white flex justify-center w-full">
+                  <span className="absolute bottom-1 text-[10px] text-white flex justify-center w-full">
                     {blackKey.midiNumber}
-                  </span> */}
+                  </span>
                 </div>
               );
             })}

@@ -7,6 +7,7 @@ export type Events = {
   'send-message-top': { targetType: 'text' | 'file' };
   'start-play': undefined; // 开始演奏事件
   'change-stream': { url: string }; // 切换流地址事件
+  'end-learning': undefined; // 结束演奏事件
 };
 
 // 创建 mitt 的单例实例
