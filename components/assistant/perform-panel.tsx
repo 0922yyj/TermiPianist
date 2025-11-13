@@ -132,7 +132,8 @@ const PerformPanel = ({}: AssistantPanelProps) => {
       if (
         message.type === 'playing_log' ||
         message.type === 'end' ||
-        message.type === 'voice_end'
+        message.type === 'voice_end' ||
+        message.type === 'user'
       ) {
         return; // 不处理这种类型的消息
       }
@@ -304,10 +305,10 @@ const PerformPanel = ({}: AssistantPanelProps) => {
       (msg) => msg.type === 'voice_end'
     );
     const hasEnd = lastSessionMessages.some((msg) => msg.type === 'end');
-    const hasPlanning = lastSessionMessages.some((msg) => msg.type === 'planning');
-    if (hasPlanning) {
+    // const hasPlanning = lastSessionMessages.some((msg) => msg.type === 'planning');
+    /* if (hasPlanning) {
       return true;
-    }
+    } */
     // 当有 voice_end 但没有 end 时，禁用按钮
     if (hasVoiceEnd && !hasEnd) {
       return true;
