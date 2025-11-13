@@ -220,7 +220,7 @@ export default function PerformArea() {
       })} */}
       <h2 className="text-xl font-bold">演奏区域</h2>
 
-      <div className="relative w-full overflow-x-auto mt-4 pb-4 h-[400px]">
+      <div className="relative w-full overflow-x-auto mt-4 pb-4 h-[360px]">
         <div className="piano-container relative h-[240px] min-w-[1400px]">
           {/* 键盘标记 - 显示分割线 */}
           <div className="absolute top-0 left-0 w-full flex z-10">

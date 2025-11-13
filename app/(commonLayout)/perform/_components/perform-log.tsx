@@ -14,7 +14,7 @@ export default function PerformLog() {
   });
 
   return (
-    <div className="h-[40vh] flex flex-col gap-4 border-1 border-[#41719C] rounded-md p-4">
+    <div className="h-[50vh] flex flex-col gap-4 border-1 border-[#41719C] rounded-md p-4">
       <h2 className="font-medium text-lg">演奏日志 ：</h2>
 
       {playingLogs.length === 0 ? (
