@@ -267,9 +267,6 @@ const PerformPanel = ({}: AssistantPanelProps) => {
     isVoiceEnded,
     setIsVoiceEnded,
   } = useStream(currentSessionId);
-  useEffect(() => {
-    console.log('hasReceivedData: ', hasReceivedData, isLoading);
-  }, [hasReceivedData, isLoading]);
   // 监听流结束事件，更新loading状态
   useEffect(() => {
     let isMounted = true;

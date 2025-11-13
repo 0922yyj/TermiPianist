@@ -88,7 +88,6 @@ export const useStream = (currentSessionId: string | null) => {
                         }
 
                         const jsonData = JSON.parse(cleanedData);
-                        console.log('jsonData: ', jsonData);
                         // 设置已收到数据标志
                         setHasReceivedData(true);
 

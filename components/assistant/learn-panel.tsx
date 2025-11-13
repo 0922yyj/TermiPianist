@@ -35,7 +35,6 @@ const LearnPanel = ({}: AssistantPanelProps) => {
 
       const data = await response.json();
       setDisabled2(true);
-      console.log('data: ', data);
       emit('change-stream', { url: data.rtmp_url });
       emit('start-play');
 

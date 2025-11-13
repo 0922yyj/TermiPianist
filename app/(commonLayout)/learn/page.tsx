@@ -62,7 +62,6 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
       // rtmp://192.168.100.51/live/realsense
       // 转换为 http://192.168.100.51:8080/live/realsense.flv
       const urlParts = url.replace('rtmp://', '').split('/');
-      console.log('urlParts: ', urlParts);
       const host = urlParts[0];
       const path = urlParts.slice(1).join('/');
 
@@ -187,9 +186,6 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
 
                 // 如果延迟超过2秒，跳到最新位置
                 if (latency > 2) {
-                  console.log(
-                    `检测到延迟: ${latency.toFixed(2)}秒，跳转到最新位置`
-                  );
                   video.currentTime = bufferedEnd - 0.3; // 保留0.3秒缓冲
                 }
               }
@@ -311,7 +307,8 @@ export default function LearnPage({ rtmpUrl }: LearnPageProps = {}) {
           <div className="relative w-full">
             <VideoPlayer
               isPlaying={isPlaying}
-              rtmpUrl={'rtmp://192.168.1.167/live/realsense'}
+              // rtmpUrl={'rtmp://192.168.1.167/live/realsense'}
+              rtmpUrl={currentRtmpUrl}
             />
             {/* 结束演奏时的遮罩层 */}
             {isEnding && (

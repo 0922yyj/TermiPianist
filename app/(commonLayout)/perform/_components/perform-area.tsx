@@ -292,9 +292,9 @@ export default function PerformArea() {
                   }`}
                   // onClick={() => handleKeyClick(key.id)}
                 >
-                  <span className="absolute bottom-1 text-[10px] text-gray-400">
+                  {/* <span className="absolute bottom-1 text-[10px] text-gray-400">
                     {key.midiNumber}
-                  </span>
+                  </span> */}
                 </div>
               );
             })}
@@ -343,9 +343,9 @@ export default function PerformArea() {
                   }}
                   // onClick={() => handleKeyClick(blackKey.id)}
                 >
-                  <span className="absolute bottom-1 text-[10px] text-white flex justify-center w-full">
+                  {/* <span className="absolute bottom-1 text-[10px] text-white flex justify-center w-full">
                     {blackKey.midiNumber}
-                  </span>
+                  </span> */}
                 </div>
               );
             })}
