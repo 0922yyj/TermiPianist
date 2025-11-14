@@ -243,7 +243,7 @@ const VideoPlayer = ({ isPlaying, rtmpUrl }: VideoPlayerProps) => {
       <div className="flex justify-center items-center w-full">
         <video
           ref={videoRef}
-          className="w-[90%] aspect-video min-h-[500px] h-[55vh] mx-auto block bg-black"
+          className="w-[98%] aspect-video min-h-[500px] h-[70vh] mx-auto block bg-black"
           controls
           autoPlay
           muted
